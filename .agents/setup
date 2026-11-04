@@ -45,19 +45,101 @@ install_node() {
 
 # Amp and orb services start in `bash -l` shells from the repo root, so put the
 # pinned Node and Temporal CLI first on PATH via ~/.bash_profile.
+#
+# The app dev scripts also re-enter `bash -lc` under pnpm/turbo. Login shells
+# here reset PATH (Debian's /etc/profile, then Amp's ~/.env), which drops
+# node_modules/.bin so `tsx`/`next` are not found; macOS keeps the inherited
+# PATH. The first block saves the inherited PATH and the last restores it.
 persist_path() {
-  local marker="# tx-agent-kit orb toolchain"
   local profile="$HOME/.bash_profile"
-  # Drop a previous block (e.g. older Node version) before writing the current one.
-  if grep -Fqx "$marker" "$profile" 2>/dev/null; then
-    sed -i "/^${marker}\$/,/^# end tx-agent-kit orb toolchain\$/d" "$profile"
-  fi
-  cat >>"$profile" <<EOF
+  local start_marker="# tx-agent-kit orb inherited PATH"
+  local marker="# tx-agent-kit orb toolchain"
+  touch "$profile"
+  # Drop previous blocks (e.g. an older Node version) before writing current ones.
+  sed -i -e "/^${start_marker}\$/,/^# end tx-agent-kit orb inherited PATH\$/d" \
+    -e "/^${marker}\$/,/^# end tx-agent-kit orb toolchain\$/d" "$profile"
+  local tmp
+  tmp="$(mktemp)"
+  {
+    echo "$start_marker"
+    echo '__tx_agent_kit_inherited_path="$PATH"'
+    echo '# end tx-agent-kit orb inherited PATH'
+    cat "$profile"
+    cat <<EOF
 $marker
-export PATH="$node_home/bin:$temporal_bin:\$PATH"
+PATH="\$(printf '%s' "$node_home/bin:$temporal_bin:\$__tx_agent_kit_inherited_path:\$PATH" | awk -v RS=: -v ORS=: 'NF && !seen[\$0]++' | sed 's/:\$//')"
+export PATH
+unset __tx_agent_kit_inherited_path
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 # end tx-agent-kit orb toolchain
 EOF
+  } >"$tmp"
+  cat "$tmp" >"$profile"
+  rm -f "$tmp"
+}
+
+# Debian's /etc/profile replaces PATH before ~/.bash_profile runs; keep an
+# inherited PATH and use Debian's defaults only when PATH is empty.
+keep_inherited_path() {
+  sudo sed -i -E 's#^(  PATH=)"(/usr/local/[^"$]*)"$#\1"${PATH:-\2}"#' /etc/profile
+  grep -n 'PATH=' /etc/profile
+}
+
+# Docker cannot run in these orbs (no CAP_SYS_ADMIN/CAP_NET_ADMIN), so install
+# the compose stack's Postgres 16 + pgTAP and Redis natively instead.
+install_system_packages() {
+  local packages=(postgresql-16 postgresql-16-pgtap redis-server nginx-light)
+  local missing=() package
+  for package in "${packages[@]}"; do
+    dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null | grep -qx installed || missing+=("$package")
+  done
+  if ((${#missing[@]} == 0)); then
+    echo "System packages already installed"
+    return
+  fi
+  if [[ ! -f /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh ]]; then
+    sudo apt-get update -qq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql-common
+  fi
+  if [[ ! -f /etc/apt/sources.list.d/pgdg.list && ! -f /etc/apt/sources.list.d/pgdg.sources ]]; then
+    sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+  fi
+  # The orb has no systemd; postgres runs from a user-owned data dir instead.
+  sudo mkdir -p /etc/postgresql-common/createcluster.d
+  echo "create_main_cluster = false" | sudo tee /etc/postgresql-common/createcluster.d/no-main.conf >/dev/null
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${missing[@]}"
+}
+
+pg_bin="/usr/lib/postgresql/16/bin"
+pg_data="$HOME/.local/share/tx-agent-kit/postgres"
+
+# Creates the cluster and migrates tx_agent_kit with a temporary server, which
+# is stopped again because setup cannot leave processes running. The
+# long-running server is the `postgres` orb service.
+init_database() {
+  if [[ ! -f "$pg_data/PG_VERSION" ]]; then
+    local pwfile
+    pwfile="$(mktemp)"
+    echo postgres >"$pwfile"
+    mkdir -p "$(dirname "$pg_data")"
+    "$pg_bin/initdb" -D "$pg_data" -U postgres --pwfile="$pwfile" --auth=scram-sha-256 -E UTF8 >/dev/null
+    rm -f "$pwfile"
+  fi
+  local started_here=0
+  if ! "$pg_bin/pg_isready" -q -h 127.0.0.1 -p 5432; then
+    "$pg_bin/pg_ctl" -D "$pg_data" -w -l /tmp/tx-agent-kit-setup-postgres.log \
+      -o "-p 5432 -k /tmp -c listen_addresses=127.0.0.1" start >/dev/null
+    started_here=1
+  fi
+  export PGPASSWORD=postgres
+  if ! psql -h 127.0.0.1 -U postgres -tAc "select 1 from pg_database where datname = 'tx_agent_kit'" | grep -q 1; then
+    createdb -h 127.0.0.1 -U postgres tx_agent_kit
+  fi
+  DATABASE_URL="postgres://postgres:postgres@127.0.0.1:5432/tx_agent_kit" pnpm -s db:migrate | { grep -v '^skip ' || true; }
+  if [[ "$started_here" == 1 ]]; then
+    "$pg_bin/pg_ctl" -D "$pg_data" -w stop >/dev/null
+  fi
 }
 
 enable_pnpm() {
@@ -76,6 +158,8 @@ install_temporal_cli() {
   curl -sSf https://temporal.download/cli.sh | sh -s -- --version "$TEMPORAL_CLI_VERSION"
 }
 
+step "Install system packages" install_system_packages
+step "Keep inherited PATH in login shells" keep_inherited_path
 step "Install Node v${NODE_VERSION}" install_node
 step "Persist toolchain PATH" persist_path
 export PATH="$node_home/bin:$temporal_bin:$PATH"
@@ -84,4 +168,5 @@ step "Enable pnpm via corepack" enable_pnpm
 step "Install Temporal CLI ${TEMPORAL_CLI_VERSION}" install_temporal_cli
 step "Install dependencies" pnpm install --frozen-lockfile
 step "Build workspace packages" pnpm exec turbo run build --filter='./packages/**'
+step "Initialize and migrate Postgres" init_database
 step "Configure local .env" pnpm env:configure
