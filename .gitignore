@@ -44,3 +44,6 @@ worktrees
 /run-migrations.sh
 /reset-worktree-schema.sh
 .diffcore/
+
+# Amp orb portal metadata
+.amp/portals/*

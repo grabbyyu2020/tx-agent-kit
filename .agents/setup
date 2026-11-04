@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Amp orb setup: installs the pinned toolchain and dependencies so fresh orbs
+# start ready. Runs once per fresh orb (and again on stale snapshots), so every
+# step must be idempotent and cheap when its result already exists.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+# Keep in sync with .nvmrc (major), package.json packageManager, and the
+# Temporal CLI version installed in .github/workflows/integration-tests.yml.
+NODE_VERSION="22.23.4"
+TEMPORAL_CLI_VERSION="1.1.2"
+
+step() {
+  local label="$1"
+  shift
+  local start=$SECONDS
+  echo "==> ${label}"
+  "$@"
+  echo "<== ${label} ($((SECONDS - start))s)"
+}
+
+case "$(uname -m)" in
+  x86_64) node_arch="x64" ;;
+  aarch64 | arm64) node_arch="arm64" ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+
+node_home="$HOME/.local/share/node/v${NODE_VERSION}"
+temporal_bin="$HOME/.temporalio/bin"
+
+install_node() {
+  if [[ -x "$node_home/bin/node" ]]; then
+    echo "Node v${NODE_VERSION} already installed"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp -d)"
+  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" \
+    | tar -xJ -C "$tmp" --strip-components=1
+  mkdir -p "$(dirname "$node_home")"
+  mv "$tmp" "$node_home"
+}
+
+# Amp and orb services start in `bash -l` shells from the repo root, so put the
+# pinned Node and Temporal CLI first on PATH via ~/.bash_profile.
+persist_path() {
+  local marker="# tx-agent-kit orb toolchain"
+  local profile="$HOME/.bash_profile"
+  # Drop a previous block (e.g. older Node version) before writing the current one.
+  if grep -Fqx "$marker" "$profile" 2>/dev/null; then
+    sed -i "/^${marker}\$/,/^# end tx-agent-kit orb toolchain\$/d" "$profile"
+  fi
+  cat >>"$profile" <<EOF
+$marker
+export PATH="$node_home/bin:$temporal_bin:\$PATH"
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+# end tx-agent-kit orb toolchain
+EOF
+}
+
+enable_pnpm() {
+  # Installs corepack's pnpm shim next to the pinned node, then fetches the
+  # packageManager version so the first pnpm call does not download it.
+  corepack enable --install-directory "$node_home/bin"
+  corepack install
+  pnpm --version
+}
+
+install_temporal_cli() {
+  if "$temporal_bin/temporal" --version 2>/dev/null | grep -Fq "temporal version ${TEMPORAL_CLI_VERSION} "; then
+    echo "Temporal CLI ${TEMPORAL_CLI_VERSION} already installed"
+    return
+  fi
+  curl -sSf https://temporal.download/cli.sh | sh -s -- --version "$TEMPORAL_CLI_VERSION"
+}
+
+step "Install Node v${NODE_VERSION}" install_node
+step "Persist toolchain PATH" persist_path
+export PATH="$node_home/bin:$temporal_bin:$PATH"
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+step "Enable pnpm via corepack" enable_pnpm
+step "Install Temporal CLI ${TEMPORAL_CLI_VERSION}" install_temporal_cli
+step "Install dependencies" pnpm install --frozen-lockfile
+step "Build workspace packages" pnpm exec turbo run build --filter='./packages/**'
+step "Configure local .env" pnpm env:configure
