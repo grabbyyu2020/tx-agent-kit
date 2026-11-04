@@ -127,7 +127,7 @@ jobs:
         run: pnpm env:configure
       - name: Install Temporal CLI
         run: |
-          curl -sSf https://temporal.download/cli.sh | TEMPORAL_CLI_VERSION=1.1.2 sh
+          curl -sSf https://temporal.download/cli.sh | sh -s -- --version 1.1.2
           echo "$HOME/.temporalio/bin" >> "$GITHUB_PATH"
       - name: Ensure infrastructure
         run: pnpm infra:ensure
