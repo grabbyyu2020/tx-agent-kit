@@ -26,6 +26,7 @@
     "(^|/)coverage/",
     "(^|/)\\.turbo/",
     "(^|/)\\.artifacts/",
+    "^\\.skill-sources/",
     "(^|/)pnpm-lock\\.yaml$"
   ],
   "secretScanPathPatterns": [
