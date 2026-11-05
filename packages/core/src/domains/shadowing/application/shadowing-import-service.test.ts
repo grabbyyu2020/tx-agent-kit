@@ -432,8 +432,8 @@ describe('ShadowingImportService status transitions', () => {
   })
 })
 
-describe('ShadowingImportService regeneration [INV-SHADOW-012]', () => {
-  it('explains only the regenerating sentence with the full transcript and stores it', async () => {
+describe('ShadowingImportService regeneration', () => {
+  it('explains only the regenerating sentence with the full transcript and stores it [INV-SHADOW-012]', async () => {
     const sentences = [makeSentence(0, 'ready'), makeSentence(1, 'regenerating'), makeSentence(2, 'pending')]
     const state = makeState({ video: makeVideo({ status: 'ready' }), sentences })
     const result = await run(state, (s) => s.regenerate('sentence-1'))
@@ -445,7 +445,7 @@ describe('ShadowingImportService regeneration [INV-SHADOW-012]', () => {
     expect(state.finished).toEqual([{ sentenceId: 'sentence-1', result: Either.right(explanationFor(1)) }])
   })
 
-  it('does nothing unless the sentence is regenerating, or when it is gone', async () => {
+  it('does nothing unless the sentence is regenerating, or when it is gone [INV-SHADOW-012]', async () => {
     const state = makeState({ video: makeVideo({ status: 'ready' }), sentences: [makeSentence(0, 'ready')] })
     expect(Either.isRight(await run(state, (s) => s.regenerate('sentence-0')))).toBe(true)
     expect(Either.isRight(await run(state, (s) => s.regenerate('missing')))).toBe(true)
@@ -453,7 +453,7 @@ describe('ShadowingImportService regeneration [INV-SHADOW-012]', () => {
     expect(state.finished).toEqual([])
   })
 
-  it('failRegeneration records a Left with the message', async () => {
+  it('failRegeneration records a Left with the message [INV-SHADOW-012]', async () => {
     const state = makeState()
     await run(state, (s) => s.failRegeneration('sentence-1', 'explanation LLM call failed: 500'))
     expect(state.finished).toEqual([{ sentenceId: 'sentence-1', result: Either.left('explanation LLM call failed: 500') }])

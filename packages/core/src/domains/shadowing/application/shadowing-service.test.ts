@@ -261,7 +261,7 @@ describe('ShadowingService reads', () => {
   })
 })
 
-describe('ShadowingService ownership [INV-SHADOW-018]', () => {
+describe('ShadowingService ownership', () => {
   const foreignCases: ReadonlyArray<
     readonly [string, (s: ShadowingService['Type'], userId: string) => Effect.Effect<unknown, CoreError, ShadowingStorePort>]
   > = [
@@ -273,20 +273,18 @@ describe('ShadowingService ownership [INV-SHADOW-018]', () => {
     ['regenerateExplanation', (s, userId) => s.regenerateExplanation(userId, videoId, 0)]
   ]
 
-  for (const [name, call] of foreignCases) {
-    it(`${name}: another user’s video is NOT_FOUND exactly like a missing one and nothing is written`, async () => {
-      const foreignState = makeState({ videos: [makeVideo({ status: 'failed' })] })
-      const missingState = makeState({ videos: [] })
+  it.each(foreignCases)('%s: a video owned by another user is NOT_FOUND exactly like a missing one and nothing is written [INV-SHADOW-018]', async (_name, call) => {
+    const foreignState = makeState({ videos: [makeVideo({ status: 'failed' })] })
+    const missingState = makeState({ videos: [] })
 
-      const foreign = await run(foreignState, (s) => call(s, stranger))
-      const missing = await run(missingState, (s) => call(s, owner))
+    const foreign = await run(foreignState, (s) => call(s, stranger))
+    const missing = await run(missingState, (s) => call(s, owner))
 
-      expect(errorCode(foreign)).toBe('NOT_FOUND')
-      expect(errorCode(missing)).toBe('NOT_FOUND')
-      expect(Either.isLeft(foreign) && foreign.left.message).toBe(Either.isLeft(missing) && missing.left.message)
-      expect(foreignState.writes).toEqual([])
-    })
-  }
+    expect(errorCode(foreign)).toBe('NOT_FOUND')
+    expect(errorCode(missing)).toBe('NOT_FOUND')
+    expect(Either.isLeft(foreign) && foreign.left.message).toBe(Either.isLeft(missing) && missing.left.message)
+    expect(foreignState.writes).toEqual([])
+  })
 })
 
 describe('ShadowingService writes', () => {

@@ -237,7 +237,7 @@ describe('shadowing access control', () => {
     }
   })
 
-  it("returns 404 for another user's video [INV-SHADOW-018]", async () => {
+  it('returns 404 for a video owned by another user [INV-SHADOW-018]', async () => {
     const owner = await createUser(getFactoryContext())
     const intruder = await createUser(getFactoryContext())
     const video = await createImportedVideo(owner.token, 'shadowing-404-seed')
@@ -280,7 +280,7 @@ describe('shadowing access control', () => {
 })
 
 describe('shadowing library and detail', () => {
-  it("lists only the caller's videos [INV-SHADOW-016]", async () => {
+  it('lists only the videos of the caller [INV-SHADOW-016]', async () => {
     const user = await createUser(getFactoryContext())
     const other = await createUser(getFactoryContext())
     const older = await createImportedVideo(user.token, 'shadowing-list-older')

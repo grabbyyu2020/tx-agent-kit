@@ -21,7 +21,7 @@ describe('selectCaptionTrack', () => {
     expect(result).toEqual(Option.some({ kind: 'manual', lang: 'en-US' }))
   })
 
-  it('ignores manual keys that merely start with "en" and live_chat [INV-SHADOW-003]', () => {
+  it('ignores manual keys enm, eng and live_chat [INV-SHADOW-003]', () => {
     const result = selectCaptionTrack({
       subtitles: { live_chat: fmt, enm: fmt, eng: fmt },
       automatic_captions: { en: fmt }
