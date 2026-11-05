@@ -1,5 +1,4 @@
 import type { ShadowingSegment } from '@tx-agent-kit/contracts'
-import nlp from 'compromise'
 import { normaliseToken, sentenceTokens, type AlignedSentence } from './sentence-alignment.js'
 
 export type PracticeSegmentLimitsConfig = {
@@ -20,12 +19,6 @@ type Range = readonly [start: number, end: number]
 
 const wordTokenCount = (text: string): number =>
   sentenceTokens(text).filter((token) => normaliseToken(token).length > 0).length
-
-/** Clause splitter backed by `compromise`; mostly splits at clause punctuation such as commas. */
-export const compromiseClauseSplitter: ClauseSplitter = (text) => {
-  const out: unknown = nlp(text).clauses().out('array')
-  return Array.isArray(out) ? out.filter((clause): clause is string => typeof clause === 'string') : [text]
-}
 
 /**
  * Split a sentence into practice segments. A sentence within `limits` stays whole. Otherwise clauses

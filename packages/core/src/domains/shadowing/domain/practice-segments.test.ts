@@ -1,7 +1,8 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import type { CaptionWord } from './caption-transcript.js'
-import { compromiseClauseSplitter, splitIntoPracticeSegments, type PracticeSegment } from './practice-segments.js'
+import { compromiseClauseSplitter } from './compromise-clause-splitter.js'
+import { splitIntoPracticeSegments, type PracticeSegment } from './practice-segments.js'
 import type { AlignedSentence } from './sentence-alignment.js'
 
 /** Build a sentence from tokens; `gaps[i]` is the pause before word i (default 0), every word lasts 100 ms. */

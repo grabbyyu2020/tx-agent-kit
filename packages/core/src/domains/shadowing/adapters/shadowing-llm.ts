@@ -1,9 +1,8 @@
-import {
-  chatCompletionsJson,
-  type ChatCompletionError,
-  type ChatCompletionRequest,
-  type ChatCompletionResult,
-  type ShadowingLlmNotConfiguredError
+import type {
+  ChatCompletionError,
+  ChatCompletionRequest,
+  ChatCompletionResult,
+  ShadowingLlmNotConfiguredError
 } from '@tx-agent-kit/ai'
 import { SHADOWING_SEGMENTATION_CHUNK_WORDS } from '@tx-agent-kit/contracts'
 import { Effect, Either, Layer } from 'effect'
@@ -14,7 +13,7 @@ import { ShadowingLlmPort } from '../ports/shadowing-ports.js'
 
 type ChatCompletionsJsonFn = (
   request: ChatCompletionRequest
-) => Effect.Effect<ChatCompletionResult, ChatCompletionError | ShadowingLlmNotConfiguredError>
+) => Effect.Effect<ChatCompletionResult, ChatCompletionError | ShadowingLlmNotConfiguredError | LlmCallError>
 
 type ShadowingLlmDepsOptions = {
   /** Defaults to `chatCompletionsJson` from `@tx-agent-kit/ai` (env-configured endpoint and model). */
@@ -42,7 +41,17 @@ const decodeSentences = (json: unknown): Either.Either<ReadonlyArray<string>, st
  * client's configured `SHADOWING_LLM_MODEL`; requests never override the model.
  */
 export const makeShadowingLlm = (deps?: ShadowingLlmDepsOptions): ShadowingLlmPort['Type'] => {
-  const chat = deps?.chatCompletionsJson ?? ((request: ChatCompletionRequest) => chatCompletionsJson(request))
+  // @tx-agent-kit/ai is loaded on first call so importing @tx-agent-kit/core stays cheap.
+  const chat =
+    deps?.chatCompletionsJson ??
+    ((request: ChatCompletionRequest) =>
+      Effect.flatMap(
+        Effect.tryPromise({
+          try: () => import('@tx-agent-kit/ai'),
+          catch: (cause) => new LlmCallError({ message: `Failed to load the LLM client: ${String(cause)}` })
+        }),
+        (ai) => ai.chatCompletionsJson(request)
+      ))
 
   const callJson = (stepName: LlmStepName, messages: ChatCompletionRequest['messages']) =>
     chat({ stepName, messages }).pipe(

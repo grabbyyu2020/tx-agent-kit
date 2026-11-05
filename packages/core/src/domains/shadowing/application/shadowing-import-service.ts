@@ -5,7 +5,7 @@ import {
 } from '@tx-agent-kit/contracts'
 import { Context, Effect, Either, Layer, Option } from 'effect'
 import { batchIndexOf } from '../domain/explanation.js'
-import { compromiseClauseSplitter, splitIntoPracticeSegments } from '../domain/practice-segments.js'
+import { splitIntoPracticeSegments, type ClauseSplitter } from '../domain/practice-segments.js'
 import { alignSentences, type AlignedSentence } from '../domain/sentence-alignment.js'
 import type { NewShadowingSegmentInput, NewShadowingSentenceInput } from '../domain/shadowing-domain.js'
 import {
@@ -38,7 +38,7 @@ const fromStore = <A>(message: string, effect: Effect.Effect<A, unknown>): Effec
   effect.pipe(Effect.mapError((cause) => new ShadowingStoreError({ message: `${message}: ${describeCause(cause)}`, cause })))
 
 /** Sentences (batch from the sentence index) and their practice segments, indexed across the whole video. */
-const buildTranscript = (aligned: ReadonlyArray<AlignedSentence>) => {
+const buildTranscript = (aligned: ReadonlyArray<AlignedSentence>, clauseSplitter: ClauseSplitter) => {
   const sentences: NewShadowingSentenceInput[] = []
   const segments: NewShadowingSegmentInput[] = []
   for (const [sentenceIndex, sentence] of aligned.entries()) {
@@ -52,7 +52,7 @@ const buildTranscript = (aligned: ReadonlyArray<AlignedSentence>) => {
     const parts = splitIntoPracticeSegments(
       sentence,
       { maxWords: SHADOWING_SEGMENT_MAX_WORDS, maxMs: SHADOWING_SEGMENT_MAX_MS },
-      compromiseClauseSplitter
+      clauseSplitter
     )
     for (const part of parts) {
       segments.push({
@@ -155,7 +155,12 @@ export const ShadowingImportServiceLive = Layer.succeed(ShadowingImportService, 
         return yield* Effect.fail(aligned.left)
       }
 
-      const transcript = buildTranscript(aligned.right)
+      // Loaded on first use so importing @tx-agent-kit/core does not load the NLP library. A missing
+      // module is a broken deployment, not a retryable import failure, so it stays a defect.
+      const { compromiseClauseSplitter } = yield* Effect.tryPromise(
+        () => import('../domain/compromise-clause-splitter.js')
+      ).pipe(Effect.orDie)
+      const transcript = buildTranscript(aligned.right, compromiseClauseSplitter)
       yield* fromStore(
         'Failed to store shadowing transcript',
         store.replaceTranscript(videoId, transcript.sentences, transcript.segments)
