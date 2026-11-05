@@ -19,6 +19,7 @@
 | [social-platform-integration-prd](prd/social-platform-integration-prd.md) | Social Platform Integration | Lightweight product scope for the "Social Platform Integration" subsystem split. | social-platform-integration, prd, migration, system-design, social, platform, integration | changing |
 | [temporal-workflows-prd](prd/temporal-workflows-prd.md) | Temporal Workflows | Lightweight product scope for the "Temporal Workflows" subsystem split. | temporal-workflows, prd, migration, system-design, temporal, workflows | changing |
 | [tenancy-model-prd](prd/tenancy-model-prd.md) | Tenancy Model | Product scope for auth, organizations, workspaces, RBAC, invitations, member lifecycle, and tenant isolation. | tenancy-model, prd, migration, system-design, tenancy, model | changing |
+| [youtube-shadowing-prd](prd/youtube-shadowing-prd.md) | YouTube Shadowing Practice | Personal tool for shadowing YouTube videos sentence by sentence, with LLM explanations of each sentence in Chinese. | youtube-shadowing, prd, youtube, shadowing, ai, temporal | changing |
 
 ## Design Documents
 
@@ -43,6 +44,7 @@
 | [temporal-workflows-design](design/temporal-workflows-design.md) | Temporal Workflows | Temporal workflow organization, task queues, design rules, activity patterns, retry policies, signal handling, and real-time pipeline event feedback via SSE. Covers the Workflows subsystem (#15). | temporal-workflows, design, temporal, workflows, sse, pipelines | temporal-workflows-prd | changing |
 | [tenancy-model-design](design/tenancy-model-design.md) | Tenancy Model | Auth, identity, organization/team hierarchy, RBAC, client review, and tenant isolation for tx-agent-kit. | tenancy-model, design, tenancy, auth, rbac | tenancy-model-prd | changing |
 | [webhooks-design](design/webhooks-design.md) | Webhooks | Org-scoped outbound webhook subscriptions with HMAC signing, retry with exponential backoff, and dead letter handling. | webhooks, design, events | - | changing |
+| [youtube-shadowing-design](design/youtube-shadowing-design.md) | YouTube Shadowing Practice | User-scoped shadowing domain: yt-dlp captions, LLM sentence segmentation, deterministic practice segments, batched Chinese explanations in a Temporal workflow, and an embedded YouTube practice page. | youtube-shadowing, design, youtube, shadowing, ai, temporal | youtube-shadowing-prd | changing |
 
 ## Invariant Summary
 
