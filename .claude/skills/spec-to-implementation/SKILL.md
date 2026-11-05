@@ -1,7 +1,7 @@
 ---
 name: spec-to-implementation
-description: End-to-end spec implementation with agent swarms. Analyzes a design spec, identifies gaps, implements with TDD, then runs adversarial review-fix loops until clean. Use when a design doc exists and you need to build or complete the implementation.
-argument-hint: <path-to-spec> [--phase gap-analysis|tdd|implement|review-fix|prevention]
+description: End-to-end spec implementation with agent swarms. Analyzes a design spec, identifies gaps, implements every tx task linked to the spec in dependency order with parallel sub-agents (TDD), then runs adversarial review-fix loops until clean. Use when a design doc exists and you need to build or complete the implementation.
+argument-hint: <path-to-spec> [--phase gap-analysis|tdd|implement|review-fix|prevention] [--max-parallel N]
 ---
 
 # Spec to Implementation
@@ -20,7 +20,9 @@ builds with TDD, then adversarial-reviews until no bugs remain.
 ```
 Phase 1: Gap Analysis        →  5-10 sub-agents compare spec vs codebase
 Phase 2: TDD                 →  Write failing tests for all gaps
-Phase 3: Implementation      →  Build code in worktrees to pass tests
+Phase 3: Implementation      →  Task-graph mode: sub-agents implement every tx task in
+                                dependency order, in waves (default when the spec has tasks);
+                                otherwise vertical slices in worktrees
 Phase 4: Adversarial Review  →  10-15 reviewers per worktree, fix loop
 Phase 5: Prevention          →  Surface ESLint rules + test strategies
 ```
@@ -38,8 +40,8 @@ phases sequentially.
 - **Claude Code**: Use `/loop 10m /spec-to-implementation <spec-path>` for continuous
   review-fix cycles. Maximum runtime: **1-1.5 hours** (the loop auto-stops or use CronDelete).
   The loop is safe because no phase modifies `main` or any shared branch.
-- **Codex**: Use `./scripts/ralph.sh --design-doc <name> --runtime codex` to dispatch tasks
-  from the spec's task graph.
+- **Codex / Amp / any agent with a sub-agent tool**: run Phase 3 in task-graph mode (below).
+  The same procedure works in Claude Code with the Task tool.
 
 ---
 
@@ -86,6 +88,10 @@ Produce a **gap table**:
 
 For each gap identified in Phase 1, write **failing integration tests first**.
 
+In Task-Graph Mode (Phase 3) this phase is folded into each task: the task's sub-agent writes
+its failing tests first, then the code. Run Phase 1 and Phase 2 separately only for specs
+without tx tasks, or to find gaps in an existing implementation.
+
 ### Rules
 
 - One test file per domain area (e.g., `tenancy-model.integration.test.ts`)
@@ -107,9 +113,106 @@ Launch **1 agent per gap cluster** (group related gaps). Each agent:
 
 ## Phase 3: Implementation
 
-Build the code to make tests pass. Use the `/worktree` skill conventions.
+Build the code to make tests pass.
 
-### Agent Strategy
+If the spec's design doc has linked tx tasks (`tx task list --json` entries whose
+`linkedDocs[].name` is the design doc or its plan), use **Task-Graph Mode**. Otherwise use the
+vertical-slice worktree strategy below.
+
+### Task-Graph Mode (default when tx tasks exist)
+
+The orchestrator (you) owns the queue, the shared files, verification and commits. Sub-agents
+implement one task each. Work proceeds in **waves**: every wave runs all currently ready tasks
+in scope that can run together, and the next wave starts only after the previous wave is
+verified, because tasks unblocked by it depend on its code.
+
+```
+SETUP
+  tx doc show <design> --md; tx doc show <plan> --md
+  SCOPE = ids from `tx task list --json` whose linkedDocs include <design> or <plan>
+  Abort if any SCOPE task depends on a task outside SCOPE that is not done.
+
+LOOP
+  READY = `tx task ready -n 100 --json` ∩ SCOPE, status not active/blocked
+  if READY empty:
+      if every SCOPE task is done → go to FINISH
+      else → report the blocked tasks and their blockers to the user; stop
+  WAVE = pick from READY by score, up to --max-parallel (default 4), such that
+         no two tasks write the same file (see File Ownership)
+  for each task in WAVE: tx task update <id> --status active
+  launch one sub-agent per task IN PARALLEL (same turn), each with the brief below
+  wait for all sub-agents
+  for each finished task: VERIFY (below)
+      pass → commit its files, tx task done <id>
+      fail → send the failure back to the same sub-agent once; re-VERIFY
+             still failing → tx task update <id> --status blocked, add a note to the
+             description with the failure, continue with independent tasks
+  run the wave gate: pnpm type-check:quiet && pnpm lint:quiet && pnpm test:quiet,
+      plus pnpm test:integration:quiet if the wave touched integration-tested code
+  wave gate red → fix (yourself or a fix sub-agent) before starting the next wave
+  repeat LOOP
+
+FINISH
+  pnpm lint && pnpm type-check && pnpm test && pnpm test:integration:quiet
+  continue with Phase 4 (adversarial review) on the combined diff, then the
+  verify-invariants skill for spec evidence
+```
+
+#### File Ownership
+
+Before launching a wave, list the files each task will create or modify (from the task
+description, the design doc's Component Inventory and Implementation Sequence). Two tasks
+in the same wave must not touch the same file. Shared registration files
+(`packages/contracts/src/index.ts`, `literals.ts`, `packages/core/src/index.ts`,
+`apps/api/src/api.ts`, `server-lib.ts`, `apps/worker/src/workflows.ts`, `activities.ts`,
+`resolve-dispatch.ts`, schema.ts, `.env.example`) are assigned to exactly one task per wave;
+a conflicting task waits for the next wave even if it is ready. All sub-agents work in the
+current checkout on the current branch: the dependency graph means later tasks need earlier
+tasks' uncommitted-to-main code, so per-task worktrees from `main` do not work here.
+
+#### Sub-Agent Brief
+
+Each sub-agent gets a self-contained prompt (it has not seen the conversation):
+
+- The task id, title and full description (`tx task show <id> --json`), and the acceptance
+  criterion it must meet.
+- The design doc path and the exact sections and invariant ids that apply; the plan doc path.
+- The files it owns, and the files it must not edit (everything else, especially other
+  wave members' files and the shared files it does not own).
+- Repo rules to follow: TDD (write the failing test first, test names tagged `[INV-*]`),
+  `AGENTS.md`, and the relevant skill (`new-domain-event`, `new-migration`,
+  `domain-driven-design`, `new-integration-test`, `playwright-cli` for UI screenshots).
+- Checks to run before reporting: type-check and unit tests for the touched packages, and the
+  task's own integration test file only if the orchestrator gave it the wave's single
+  integration slot (concurrent integration runs share one API server per checkout).
+- Do not run `tx` commands, do not commit, do not touch git state.
+- Final message: files changed, tests added (with names), commands run with their decisive
+  output, anything not done, and any deviation from the design doc with the reason.
+
+#### VERIFY (orchestrator, per task)
+
+1. Read the sub-agent's diff (`git diff -- <owned files>`); reject edits outside its files.
+2. Re-run its tests and type-check yourself; do not trust the report alone.
+3. Check the acceptance criterion and the invariants named in the task are actually asserted.
+4. If the design must change, update the design doc (and plan doc), `tx doc sync` both, and
+   tell later sub-agents.
+5. Commit only that task's files: `git add <files> && git commit -m "feat(<scope>): <title>"`
+   with a `Task: <id>` trailer, then `tx task done <id>`.
+
+#### Rules
+
+- Never mark a task done before VERIFY passes.
+- Never start a task whose blockers are not done; `tx task ready` already enforces this.
+- If a sub-agent discovers new work, the orchestrator adds it with
+  `tx task add ... --description "Acceptance: ..."`, `tx doc attach <id> <plan>` and
+  `tx task dep block` so it enters the graph.
+- Report progress to the user after each wave: tasks done, tasks blocked, next wave.
+
+### Vertical-Slice Mode (no tx tasks)
+
+Use the `/worktree` skill conventions.
+
+#### Agent Strategy
 
 Launch **1 agent per vertical slice** in isolated worktrees. A vertical slice is:
 contracts + domain + ports + adapters + service + API route + handler.
@@ -121,7 +224,7 @@ Each agent:
 3. Runs `pnpm type-check` (MUST pass before signaling done)
 4. Does NOT run integration tests (deferred to post-merge)
 
-### File Ownership Declaration
+#### File Ownership Declaration
 
 **CRITICAL**: To prevent merge conflicts, the orchestrator MUST declare file ownership
 for each agent upfront. No two agents should create or modify the same file.
@@ -136,7 +239,7 @@ If two agents need the same file (e.g., `apps/api/src/api.ts` for endpoint regis
 assign one agent as the owner and have the other agent document what needs to be added
 (the orchestrator merges manually).
 
-### Worktree Safety Rules
+#### Worktree Safety Rules
 
 Per `/worktree` skill:
 - One task per worktree
@@ -269,16 +372,19 @@ a high-confidence result.
 /spec-to-implementation specs/design/tenancy-model-design.md --phase gap-analysis
 ```
 
-### Codex (via ralph.sh)
+### Task-graph mode (any runtime with sub-agents)
 
 ```bash
-# Decompose spec into task graph
-tx decompose specs/design/tenancy-model-design.md
+# Implement every tx task linked to the spec, in dependency order, with parallel sub-agents
+/spec-to-implementation specs/design/youtube-shadowing-design.md --phase implement --max-parallel 4
+```
 
-# Run Ralph — each task gets spec context injected
-./scripts/ralph.sh --design-doc tenancy-model-design --runtime codex
+If the spec has no tasks yet, create them first (see the `tx-plan` and `tx-tasks` skills):
 
-# Multi-pass: run Ralph again after first pass completes
-# Ralph will pick up remaining tasks and re-review completed ones
-./scripts/ralph.sh --design-doc tenancy-model-design --runtime codex
+```bash
+tx doc add plan <name>-plan --title "<Name> implementation plan"
+tx doc link <name>-design <name>-plan && tx doc sync <name>-plan
+tx task add "<step>" --description "Acceptance: ..."
+tx doc attach <task-id> <name>-plan
+tx task dep block <dependent-id> <blocker-id>
 ```

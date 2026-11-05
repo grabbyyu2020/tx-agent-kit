@@ -30,6 +30,7 @@ This repository uses an agent-first workflow inspired by OpenAI's Harness Engine
 
 ## tx CLI
 Run `tx` in agent shells as `source ~/.zshrc >/dev/null 2>&1; eval 'tx <subcommand> ...'`.
+tx is pinned to 0.20.1 (`.agents/setup`). Workflow: design → plan → tasks (`tx doc`, `tx task`, `tx spec`); see the `tx-tasks`, `tx-docs`, `tx-plan` and `verify-invariants` skills. tx no longer runs agents (no Ralph, decompose, memory or pins).
 
 ## Stack
 - `apps/web`: Client-only Next.js SPA (no SSR, no `app/api`)
@@ -210,9 +211,8 @@ the normal local verification gate.
 - Move durable decisions into versioned docs/code.
 - Treat in-repo artifacts as the only reliable knowledge source for agents.
 
-<tx-pin id="openrouter-strategy">
+## AI Routing
 **OpenRouter-first AI routing**: All text generation, structured outputs, image generation, and embeddings go through OpenRouter. Cost is derived directly from OpenRouter's response and mapped into our CostResult type. Custom credit calculations only needed for non-OpenRouter providers (fal.ai, Veo3 video generation, ElevenLabs audio). This massively simplifies the Credit Service.
-</tx-pin>
 
 ## Local Development Startup
 

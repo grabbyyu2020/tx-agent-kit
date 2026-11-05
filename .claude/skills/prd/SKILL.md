@@ -37,6 +37,10 @@ START
 │          edge cases, constraints), save to            │
 │          `~/.claude/plans/<name>.md`.                           │
 │          → Continue to Step 1                        │
+│                                                      │
+│ Also save the plan as a tx plan doc:                 │
+│   tx doc add plan <name>-plan                        │
+│   (see .claude/skills/tx-plan/SKILL.md)              │
 └─────────────────────────────────────────────────────┘
   │
   ▼
@@ -87,6 +91,8 @@ START
 ┌─────────────────────────────────────────────────────┐
 │ Step 5: VALIDATE                                     │
 │                                                      │
+│ tx doc sync <name>                                   │
+│ tx doc lint-ears <name>                              │
 │ tx spec lint                                         │
 │ ├─ PASS → Continue to Step 6                         │
 │ └─ WARN/FAIL → Fix, re-validate                     │
@@ -115,6 +121,7 @@ START
 │                                                      │
 │ tx spec discover --doc <name>                        │
 │ tx doc link <overview> <prd> (if overview exists)    │
+│ tx doc link <name> <name>-plan (if plan doc exists)  │
 │ tx doc show <name>                                   │
 │ Print summary                                        │
 │ Suggest: /design-doc <name> for companion doc        │
@@ -134,6 +141,8 @@ DONE
 - If no plan and the request is vague, ask the user to run `/plan` first or provide more detail.
 
 The plan is saved as a standalone file at `~/.claude/plans/<name>.md` (relative to repo root). The doc's frontmatter gets `plan: ~/.claude/plans/<name>.md` and the `# Plan` section contains a reference link plus a brief summary, not the full verbatim content.
+
+Also save the plan as a tx plan doc so it is part of the spec graph: `tx doc add plan <name>-plan --title "<title> plan"`, copy the plan below the generated frontmatter, then `tx doc sync <name>-plan`. Follow `.claude/skills/tx-plan/SKILL.md`. Link it to the PRD in Step 6.
 
 ## Step 1 — Scaffold via tx
 
@@ -190,14 +199,14 @@ Update `owners`, `summary`, `domain`, `tags`, `depends_on`.
 
 ### How to Convert Plan Items to EARS
 
-| Plan Item Type | EARS Pattern | Example |
+| Plan Item Type | EARS Pattern (`kind`) | Example |
 |---------------|-------------|---------|
-| "System does X" | Ubiquitous | The system shall X |
-| "When user does X, show Y" | Event-driven | When X, the system shall show Y |
-| "If logged in, allow X" | State-driven | While authenticated, the system shall allow X |
-| "Handle error X" | Unwanted | If X occurs, then the system shall Y |
-| "Feature flag for X" | Optional | Where X is enabled, the system shall Y |
-| "When state A and user does B" | Complex | While A, when B, the system shall C |
+| "System does X" | Ubiquitous (`ubiquitous`) | The system shall X |
+| "When user does X, show Y" | Event-driven (`event-driven`) | When X, the system shall show Y |
+| "If logged in, allow X" | State-driven (`state-driven`) | While authenticated, the system shall allow X |
+| "Handle error X" | Unwanted (`unwanted`) | If X occurs, then the system shall Y |
+| "Feature flag for X" | Optional (`optional`) | Where X is enabled, the system shall Y |
+| "When state A and user does B" | Complex (`complex`) | While A, when B, the system shall C |
 
 ```markdown
 # Plan
@@ -244,18 +253,20 @@ Quantify: user friction, lost revenue, operational cost.
 
 ## EARS Requirements
 
-All functional requirements use EARS. Each gets `REQ-<SCOPE>-NNN`. These become traceable invariants via `tx spec discover`.
+All functional requirements use EARS. Each gets `REQ-<SCOPE>-NNN` (must match `REQ-[A-Z0-9-]+`). These become traceable invariants `INV-REQ-<SCOPE>-NNN` via `tx spec discover`.
+
+Every entry needs `id`, `kind`, `statement`, and `priority`; `rationale` is optional. `priority` must be `must`, `should`, or `may` (`could` and `wont` are rejected). Some kinds also require a clause field, as shown below.
 
 ### EARS Pattern Reference
 
-| Pattern | Template | When to Use |
-|---------|----------|-------------|
-| Ubiquitous | The system shall `<action>` | Always-on behavior |
-| Event-driven | When `<trigger>`, the system shall `<action>` | Response to event |
-| State-driven | While `<state>`, the system shall `<action>` | State-dependent |
-| Optional | Where `<feature>` is enabled, the system shall `<action>` | Feature-flagged |
-| Unwanted | If `<condition>`, then the system shall `<action>` | Error/edge case |
-| Complex | While `<state>`, when `<trigger>`, the system shall `<action>` | State + event |
+| Pattern | `kind` | Required clause field | Template | When to Use |
+|---------|--------|-----------------------|----------|-------------|
+| Ubiquitous | `ubiquitous` | — | The system shall `<action>` | Always-on behavior |
+| Event-driven | `event-driven` | `when` | When `<trigger>`, the system shall `<action>` | Response to event |
+| State-driven | `state-driven` | `while` | While `<state>`, the system shall `<action>` | State-dependent |
+| Optional | `optional` | `where` | Where `<feature>` is enabled, the system shall `<action>` | Feature-flagged |
+| Unwanted | `unwanted` | `if` | If `<condition>`, then the system shall `<action>` | Error/edge case |
+| Complex | `complex` | at least one of `when`, `while`, `if`, `where` | While `<state>`, when `<trigger>`, the system shall `<action>` | State + event |
 
 ### Core Requirements
 
@@ -284,9 +295,10 @@ ears_requirements:
 ```yaml
 ears_requirements:
   - id: REQ-<SCOPE>-200
-    kind: <kind>
-    statement: <requirement>
-    priority: <must|should|could>
+    kind: event-driven
+    when: <trigger>
+    statement: when <trigger>, the system shall <action>
+    priority: <must|should|may>
     rationale: <why>
 ```
 
@@ -295,9 +307,10 @@ ears_requirements:
 ```yaml
 ears_requirements:
   - id: REQ-<SCOPE>-300
-    kind: <kind>
-    statement: <requirement>
-    priority: <must|should|could>
+    kind: state-driven
+    while: <state>
+    statement: while <state>, the system shall <action>
+    priority: <must|should|may>
     rationale: <why>
 ```
 
@@ -307,6 +320,7 @@ ears_requirements:
 ears_requirements:
   - id: REQ-<SCOPE>-400
     kind: unwanted
+    if: <condition>
     statement: if <condition>, then the system shall <action>
     priority: must
     rationale: <why>
@@ -398,14 +412,17 @@ acceptance_criteria:
 Re-read the plan section. For every item in the plan, confirm it appears in at least one subsequent section. Check:
 - ≥ 10 EARS, ≥ 5 ACs, ≥ 8 NFRs, ≥ 1 persona
 - EARS IDs unique and sequential
-- EARS statements follow the correct pattern for their kind
+- EARS statements follow the correct pattern for their kind, with the required `when`/`while`/`if`/`where` clause field
+- Every `priority` is `must`, `should`, or `may`
 - No stubs, no empty tables, no "..." placeholders
 - Verify plan file exists at the path in frontmatter and its content is consistent with the doc sections
 
 ## Step 5 — Validate
 
 ```bash
-tx spec lint
+tx doc sync <name>        # re-sync the doc hash after editing
+tx doc lint-ears <name>   # EARS schema check
+tx spec lint              # drift, required sections, EARS, coverage
 ```
 
 ## Step 5.5 — Sync Plan File (MANDATORY)
@@ -427,6 +444,7 @@ Read the current plan file, merge in the new information, and write it back. Pre
 ```bash
 tx spec discover --doc <name>
 tx doc link <overview> <prd>     # if overview exists
+tx doc link <name> <name>-plan   # if the plan was saved as a tx plan doc
 tx doc show <name>
 ```
 
@@ -446,8 +464,8 @@ The design doc reads the PRD via `tx doc show <prd-name> --md` and maps every `m
 Once tests exist, annotate with invariant IDs:
 
 ```typescript
-it('should issue tokens [INV-EARS-AUTH-001]', () => { ... })
-// @spec INV-EARS-AUTH-001
+it('should issue tokens [INV-REQ-AUTH-001]', () => { ... })
+// @spec INV-REQ-AUTH-001
 ```
 
 Then: `tx spec discover`, `tx spec fci`, `tx spec status`, `tx spec gaps`, `tx spec matrix`.

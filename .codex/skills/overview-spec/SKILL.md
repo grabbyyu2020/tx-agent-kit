@@ -39,6 +39,10 @@ START
 │          components, constraints). Save it to        │
 │          `~/.codex/plans/<name>.md`.                          │
 │          → Continue to Step 1                        │
+│                                                      │
+│ Also save the plan as a tx plan doc:                 │
+│   tx doc add plan <name>-plan                        │
+│   (see .codex/skills/tx-plan/SKILL.md)              │
 └─────────────────────────────────────────────────────┘
   │
   ▼
@@ -93,6 +97,7 @@ START
 ┌─────────────────────────────────────────────────────┐
 │ Step 5: VALIDATE                                     │
 │                                                      │
+│ tx doc sync <name>                                   │
 │ tx spec lint                                         │
 │ ├─ PASS → Continue to Step 6                         │
 │ └─ WARN/FAIL → Fix issues, re-validate              │
@@ -115,6 +120,7 @@ START
 │ Step 6: LINK & REPORT                                │
 │                                                      │
 │ tx doc link <overview> <related-docs>                │
+│ tx doc link <name> <name>-plan (if plan doc exists)  │
 │ tx doc show <name>                                   │
 │ Print summary                                        │
 └─────────────────────────────────────────────────────┘
@@ -133,6 +139,8 @@ DONE
 - If no plan and the request is vague, ask the user to run `/plan` first or provide more detail.
 
 The doc's frontmatter gets `plan: ~/.codex/plans/<name>.md` and the `# Plan` section in the document body contains a reference link to the plan file, not the full content.
+
+Also save the plan as a tx plan doc so it is part of the spec graph: `tx doc add plan <name>-plan --title "<title> plan"`, copy the plan below the generated frontmatter, then `tx doc sync <name>-plan`. Follow `.codex/skills/tx-plan/SKILL.md`. Link it to the overview in Step 6.
 
 ## Step 1 — Scaffold via tx
 
@@ -234,6 +242,10 @@ High-level architecture narrative with ASCII diagram:
 ## Included
 ## Excluded
 
+# Requirements
+
+No requirements for overview docs. EARS requirements (`ears_requirements:` blocks) belong in the companion PRD.
+
 # Non-goals
 
 # Stakeholders
@@ -268,7 +280,8 @@ Re-read the plan section. For each item in the plan, confirm it appears in at le
 ## Step 5 — Validate
 
 ```bash
-tx spec lint
+tx doc sync <name>   # re-sync the doc hash after editing
+tx spec lint         # drift, required sections (Summary, Architecture, Components, Data Flows)
 ```
 
 ## Step 5.5 — Sync Plan File (MANDATORY)
@@ -287,6 +300,7 @@ Read the current plan file, merge in the new information, and write it back.
 
 ```bash
 tx doc link <overview-name> <prd-name>
+tx doc link <name> <name>-plan   # if the plan was saved as a tx plan doc
 tx doc show <name>
 ```
 

@@ -27,19 +27,20 @@ If the user says yes, proceed as if `--with-tests` was given (continue to Step 8
 
 `tx spec discover` scans files in two passes:
 
-1. **Test files** (matched by `test_patterns` in `.tx/config.toml`) — scanned for both `[INV-*]` bracket tags in test names AND `// @spec INV-*` comments
-2. **Source files** (all programming languages) — scanned ONLY for `// @spec INV-*` comments (structural annotations)
+1. **Test files** (matched by `test_patterns` in `.tx/config.toml`) — scanned for both `[INV-*]` bracket tags in test names AND `// @spec INV-*` comments. These are **test mappings**: once the test runs and its result is imported (`tx spec batch` / `tx spec run`), they count as coverage.
+2. **Production source files** (all programming languages) — scanned ONLY for `// @spec INV-*` comments. These are **source references** (enforcement traceability). `tx spec matrix` lists them separately from tests; they **do not count as coverage**, do not close a gap, and do not advance FCI.
 
-This means `@spec` comments work in ANY file (test or source), but `[INV-*]` bracket tags are only picked up from test files.
+This means `@spec` comments are picked up in ANY file, but only test files produce coverage, and `[INV-*]` bracket tags are only picked up from test files.
 
 ### Annotation Formats
 
-| Format | Where It Works | Example |
-|--------|---------------|---------|
-| `[INV-TAG-001]` in test name | Test files only | `it('creates tag [INV-TAG-001]', ...)` |
-| `// @spec INV-TAG-001` comment | Any file (test or source) | `// @spec INV-TAG-001` above a schema definition |
-| `-- @spec INV-TAG-001` SQL comment | `.sql` files | `-- @spec INV-TAG-001` in pgTAP test |
-| `# @spec INV-TAG-001` hash comment | `.py`, `.rb`, etc. | `# @spec INV-TAG-001` above a test |
+| Format | Where It Works | Counts as coverage? | Example |
+|--------|---------------|---------------------|---------|
+| `[INV-TAG-001]` in test name | Test files only | Yes, once a result is recorded | `it('creates tag [INV-TAG-001]', ...)` |
+| `// @spec INV-TAG-001` comment | Test files | Yes, once a result is recorded | `// @spec INV-TAG-001` above an `it()` |
+| `// @spec INV-TAG-001` comment | Production source | No — source reference only | `// @spec INV-TAG-001` above a schema definition |
+| `-- @spec INV-TAG-001` SQL comment | `.sql` files (`*.pgtap.sql` are tests) | Only in pgTAP test files | `-- @spec INV-TAG-001` in pgTAP test |
+| `# @spec INV-TAG-001` hash comment | `.py`, `.rb`, etc. | Only in test files | `# @spec INV-TAG-001` above a test |
 
 ### Critical: IDs Are Case-Sensitive
 
@@ -195,14 +196,15 @@ Classify each invariant into exactly one category:
 | Category | Meaning | Action |
 |----------|---------|--------|
 | **TESTABLE-MATCHED** | An existing test already covers this behavior | Append `[INV-*]` tag to test name |
-| **STRUCTURAL-MATCHED** | Code structure enforces this (schema, lint, type) | Add `// @spec INV-*` comment above enforcing code |
+| **STRUCTURAL-MATCHED** | Code structure enforces this (schema, lint, type) but no test exercises it | Add `// @spec INV-*` comment above enforcing code (source reference only — the invariant stays a gap until a test covers it) |
 | **MISSING** | No existing test or code covers this | Report as gap with test skeleton |
 
 ### Rules for matching
 
 - **Read the test body, not just the name.** A test named "complete auth flow" might cover 5+ invariants. You can only tell by reading its assertions.
 - **One test can match multiple invariants.** A single test can get `[INV-AUTH-005] [INV-REQ-AUTH-013]` if it verifies both behaviors.
-- **Prefer TESTABLE-MATCHED over STRUCTURAL-MATCHED.** Use structural only when no test exercises the behavior and the enforcement is genuinely structural (DB constraint, type system, lint rule).
+- **Prefer TESTABLE-MATCHED over STRUCTURAL-MATCHED.** Only tests count as coverage. Use structural only when no test exercises the behavior and the enforcement is genuinely structural (DB constraint, type system, lint rule). A structural invariant still needs a test (e.g. a pgTAP or integration test asserting the constraint rejects bad data) to close its gap.
+- **A source `@spec` comment and a test can coexist.** Annotating the enforcement site in source is good traceability; it complements, never replaces, the test mapping.
 - **Be precise about matching.** Don't force-match an invariant to a vaguely related test. If the test doesn't actually assert the specific behavior, classify as MISSING.
 
 ## Step 4 — Annotate
@@ -230,7 +232,7 @@ it('rejects sign-in with invalid credentials [INV-AUTH-011] [INV-REQ-AUTH-022]',
 
 ### For STRUCTURAL-MATCHED: Add @spec comments
 
-Place `// @spec INV-*` comment directly above the enforcing code:
+Place `// @spec INV-*` comment directly above the enforcing code. This records a source reference in `tx spec matrix`; it does **not** count as coverage, so also list the invariant under MISSING with a test skeleton that exercises the constraint:
 
 ```typescript
 // @spec INV-AUTH-003
@@ -272,17 +274,18 @@ tx spec discover --doc $ARGUMENTS
 ```
 
 Verify the output:
-- `Discovered links: N` should match the number of annotations you added
-- Check `By source: tag=X, comment=Y` — tag count = test annotations, comment count = structural annotations
+- The number of discovered test mappings should match the number of test annotations you added
+- Production-source `@spec` comments are reported as source references, separately from test mappings — they do not reduce gaps
 
 If links are lower than expected:
-- Check annotation format (must be `[INV-*]` in test names or `// @spec INV-*` in source)
+- Check annotation format (must be `[INV-*]` in test names or `// @spec INV-*` comments)
 - Check ID case sensitivity (must be UPPERCASE)
 - Check test file patterns in `.tx/config.toml`
 
-Then confirm gaps reduced:
+Then confirm gaps reduced (only test mappings reduce gaps) and that source references appear in the matrix:
 ```bash
 tx spec gaps --doc $ARGUMENTS
+tx spec matrix --doc $ARGUMENTS
 ```
 
 ### Troubleshooting: 0 Links Discovered
@@ -292,13 +295,15 @@ tx spec gaps --doc $ARGUMENTS
 | `Scanned 0 file(s)` | Test patterns in `.tx/config.toml` don't match your test files | Add patterns like `"**/*.test.{ts,js}"` |
 | Scanned files but 0 links | Annotation format wrong | Must be `[INV-TAG-001]` (with brackets) or `// @spec INV-TAG-001` |
 | Links found but wrong count | ID mismatch | IDs are case-sensitive. `INV-TAG-001` is not `inv-tag-001` |
-| Source `@spec` not found | Source file excluded | Check file isn't in `node_modules`, `dist`, `.git` |
+| Source `@spec` not in `tx spec matrix` | Source file excluded | Check file isn't in `node_modules`, `dist`, `.git` |
+| Source `@spec` found but gap remains | Expected — source references are not coverage | Add or annotate a test that exercises the invariant |
 
 ### How Test IDs Are Built
 
 `tx spec discover` builds test IDs as `{relative-file-path}::{test-name}`. For example:
 - `apps/api/src/routes/auth.test.ts::rejects sign-in with invalid credentials [INV-AUTH-011]`
-- `packages/infra/db/src/schema.ts::spec@line-264` (structural — no test name, uses line number)
+
+Production-source `@spec` comments are source references, not test IDs; they cannot be recorded with `tx spec run` / `tx spec batch`.
 
 ## Step 6 — Run Tests + Record
 
@@ -311,15 +316,17 @@ pnpm vitest run <test-file> --reporter=json 2>/dev/null \
 
 Run each annotated test file. The batch command matches test results to discovered spec links automatically.
 
-### For structural annotations (manual recording)
+### For structural annotations (manual review)
+
+Source `@spec` comments cannot be recorded as passed tests. After actually reviewing that the code enforces the invariant, record a manual check — this is labelled manual evidence and does **not** advance FCI or close the gap:
 
 ```bash
-# Get the exact test ID
+# Inspect what is linked (tests) — source references show in the matrix
 tx spec tests <INV-ID>
-# Output: packages/infra/db/src/schema.ts::spec@line-264 [comment]
+tx spec matrix --doc $ARGUMENTS
 
-# Record as passed after confirming the code enforces the invariant
-tx spec run "<file>::spec@line-N" --passed
+# Record the manual structural review
+tx spec invariant record <INV-ID> --passed --details "Reviewed <file>:<line> enforces <rule>"
 ```
 
 ### For pgTAP annotations
@@ -345,9 +352,9 @@ Print a summary table:
 |--------|-------|
 | Total invariants | N |
 | TESTABLE-MATCHED (annotated existing tests) | X |
-| STRUCTURAL-MATCHED (@spec in source) | Y |
-| MISSING (need new tests) | Z |
-| FCI | before% → after% |
+| STRUCTURAL-MATCHED (@spec source reference, not coverage) | Y |
+| MISSING (need new tests, incl. structural-only) | Z |
+| FCI (tests only) | before% → after% |
 
 ### Missing Invariants (need new tests)
 | ID | Statement | Severity | Suggested File |
@@ -367,7 +374,7 @@ If yes → Step 8. If no → done.
 
 ## Step 8 — Create Missing Tests (optional)
 
-For each MISSING invariant from Step 3, write a full integration test. Follow the same conventions as `/verify-invariants` Step 3:
+For each MISSING invariant from Step 3 (including STRUCTURAL-MATCHED invariants that only have a source reference), write a full integration test (or pgTAP test for DB constraints). Follow the same conventions as the `/verify-invariants` skill:
 
 ### Writing tests
 
@@ -414,8 +421,8 @@ tx spec discover --doc $ARGUMENTS
 pnpm vitest run <test-file> --reporter=json 2>/dev/null \
   | tx spec batch --from vitest
 
-# Record any structural annotations
-# tx spec run "<file>::spec@line-N" --passed
+# Record manual structural reviews (manual evidence, not coverage)
+# tx spec invariant record <INV-ID> --passed --details "..."
 
 # Final coverage check
 tx spec fci --doc $ARGUMENTS
@@ -432,7 +439,7 @@ Print the final summary:
 |--------|-------|
 | Total invariants | N |
 | Mapped to existing tests | X |
-| Structural annotations | Y |
+| Structural source references (not coverage) | Y |
 | New tests written | Z |
 | FCI | before% → after% |
 | Remaining gaps | 0 (or list) |

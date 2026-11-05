@@ -194,7 +194,7 @@ Severity rubric and codebase-specific bug classes: see the skill's rubric sectio
 
 **Claude Code**: launch these in a single message (multiple `Agent` tool calls) so they run
 concurrently, or drive the whole find -> verify pipeline with the `Workflow` tool (see
-Orchestration). **Codex**: run dimensions sequentially, or dispatch via `scripts/ralph.sh`.
+Orchestration). **Codex**: run dimensions sequentially, optionally tracking each as a tx task.
 
 ---
 
@@ -319,8 +319,10 @@ one area/dimension, running Phases 1-5, then marking the area swept.
 - The main thread keeps the gates + the surgical commit (do not let sub-agents commit).
 
 **Codex**
-- Codex auto-loads this `SKILL.md`. Run dimensions sequentially in one session, or dispatch
-  per-dimension tasks via `scripts/ralph.sh` (see the `ralph-loop` skill).
+- Codex auto-loads this `SKILL.md`. Run dimensions sequentially in one session. To track progress,
+  create one tx task per dimension (`tx task add "Bug hunt: <dimension>"`), then work them in
+  order with `tx task ready` / `tx task update <id> --status active` / `tx task done <id>` (see
+  the `tx-tasks` skill).
 - Same hard rails: branch off main, surgical commits, no push/merge, repro before fix.
 
 ---
