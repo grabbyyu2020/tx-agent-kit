@@ -17,6 +17,7 @@ import { SharpThumbnailGeneratorPortLive } from './asset-thumbnail-generator.js'
 import { getWorkerEnv } from './config/env.js'
 import { billingActivities } from './billing-activities.js'
 import { lifecycleActivities } from './activities/lifecycle.js'
+import { shadowingActivities } from './shadowing-activities.js'
 
 export { billingActivities } from './billing-activities.js'
 
@@ -391,7 +392,9 @@ export const combinedActivities = {
   // invoked by the domain-event workflows (organizations/billing) and the daily
   // lifecycleScanWorkflow. The drip sweep + render/send activities live on the
   // EMAIL_CAMPAIGNS queue (campaignActivities) and are registered separately.
-  ...lifecycleActivities
+  ...lifecycleActivities,
+  // Shadowing import/regeneration activities also run on the DEFAULT queue.
+  ...shadowingActivities
 }
 
 export const storageActivities = {

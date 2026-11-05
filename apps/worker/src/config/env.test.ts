@@ -34,6 +34,7 @@ describe('getWorkerEnv', () => {
     vi.stubEnv('RESEND_API_KEY', undefined)
     vi.stubEnv('RESEND_FROM_EMAIL', undefined)
     vi.stubEnv('WEB_BASE_URL', undefined)
+    vi.stubEnv('YT_DLP_PATH', undefined)
 
     expect(getWorkerEnv()).toEqual({
       NODE_ENV: 'development',
@@ -65,7 +66,8 @@ describe('getWorkerEnv', () => {
       DRIP_SWEEP_BATCH_SIZE: 100,
       DRIP_SWEEP_MAX_BATCHES: 50,
       LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-      STRIPE_SECRET_KEY: undefined
+      STRIPE_SECRET_KEY: undefined,
+      YT_DLP_PATH: 'yt-dlp'
     })
   })
 
@@ -90,6 +92,7 @@ describe('getWorkerEnv', () => {
     vi.stubEnv('RESEND_API_KEY', undefined)
     vi.stubEnv('RESEND_FROM_EMAIL', undefined)
     vi.stubEnv('WEB_BASE_URL', undefined)
+    vi.stubEnv('YT_DLP_PATH', '/opt/yt-dlp/bin/yt-dlp')
 
     expect(getWorkerEnv()).toEqual({
       NODE_ENV: 'production',
@@ -121,7 +124,8 @@ describe('getWorkerEnv', () => {
       DRIP_SWEEP_BATCH_SIZE: 100,
       DRIP_SWEEP_MAX_BATCHES: 50,
       LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-      STRIPE_SECRET_KEY: undefined
+      STRIPE_SECRET_KEY: undefined,
+      YT_DLP_PATH: '/opt/yt-dlp/bin/yt-dlp'
     })
   })
 
@@ -292,7 +296,8 @@ describe('resolveWorkerTemporalConnectionOptions', () => {
       DRIP_SWEEP_BATCH_SIZE: 100,
       DRIP_SWEEP_MAX_BATCHES: 50,
       LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-      STRIPE_SECRET_KEY: undefined
+      STRIPE_SECRET_KEY: undefined,
+      YT_DLP_PATH: 'yt-dlp'
     }
 
     expect(resolveWorkerTemporalConnectionOptions(env)).toEqual({
@@ -331,7 +336,8 @@ describe('resolveWorkerTemporalConnectionOptions', () => {
       DRIP_SWEEP_BATCH_SIZE: 100,
       DRIP_SWEEP_MAX_BATCHES: 50,
       LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-      STRIPE_SECRET_KEY: undefined
+      STRIPE_SECRET_KEY: undefined,
+      YT_DLP_PATH: 'yt-dlp'
     }
 
     expect(resolveWorkerTemporalConnectionOptions(env)).toEqual({
@@ -374,7 +380,8 @@ describe('resolveWorkerTemporalConnectionOptions', () => {
       DRIP_SWEEP_BATCH_SIZE: 100,
       DRIP_SWEEP_MAX_BATCHES: 50,
       LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-      STRIPE_SECRET_KEY: undefined
+      STRIPE_SECRET_KEY: undefined,
+      YT_DLP_PATH: 'yt-dlp'
     }
 
     expect(resolveWorkerTemporalConnectionOptions(env)).toEqual({

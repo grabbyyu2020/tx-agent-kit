@@ -54,6 +54,8 @@ const unionSets = (...sets) => new Set(sets.flatMap((set) => Array.from(set)))
 // with a safe code default, an optional feature surface, or a value supplied at
 // runtime (workflow secret / vault field) rather than the rendered env file.
 const deployRuntimeEnvExemptions = new Set([
+  // yt-dlp binary for shadowing caption imports (defaults to `yt-dlp` on PATH).
+  'YT_DLP_PATH',
   // Test-only: swaps the live Temporal-backed AutoFixTriggerPort for an
   // in-process recording stub (see isAutoFixTriggerStubMode). Never set in a
   // real deployment, so it must not appear in the deploy env templates.

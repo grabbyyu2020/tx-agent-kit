@@ -1,10 +1,15 @@
 import {
   proxyActivities
 } from '@temporalio/workflow'
-import { PAYMENT_GRACE_PERIOD_DAYS } from '@tx-agent-kit/contracts/constants'
+import {
+  PAYMENT_GRACE_PERIOD_DAYS,
+  SHADOWING_EXPLANATION_MAX_ATTEMPTS
+} from '@tx-agent-kit/contracts/constants'
 import type { activities, SerializedDomainEvent } from './activities.js'
 import type { billingActivities } from './billing-activities.js'
 import type { lifecycleActivities } from './activities/lifecycle.js'
+import type { shadowingActivities } from './shadowing-activities.js'
+import { shadowingFailureMessageOf, shadowingFailureReasonOf } from './shadowing-workflow.js'
 
 const {
   ping,
@@ -534,4 +539,102 @@ export async function welcomeCreditGrantedWorkflow(
  */
 export async function lifecycleScanWorkflow(): Promise<void> {
   await scanTeamActivity()
+}
+
+// ── YouTube shadowing ────────────────────────────────────────────────
+// @spec youtube-shadowing-design §"Workflows and Activities"
+
+// Captions + LLM segmentation in one activity (Decision 3); its retries cover
+// yt-dlp and LLM transient errors together.
+const { prepareShadowingTranscript } = proxyActivities<typeof shadowingActivities>({
+  startToCloseTimeout: '30 minutes',
+  retry: { maximumAttempts: 3, initialInterval: '5 seconds', backoffCoefficient: 2 }
+})
+
+// @spec INV-SHADOW-022 — a batch is attempted at most SHADOWING_EXPLANATION_MAX_ATTEMPTS times.
+const { explainShadowingBatch, regenerateShadowingExplanation } = proxyActivities<typeof shadowingActivities>({
+  startToCloseTimeout: '5 minutes',
+  retry: {
+    maximumAttempts: SHADOWING_EXPLANATION_MAX_ATTEMPTS,
+    initialInterval: '5 seconds',
+    backoffCoefficient: 2
+  }
+})
+
+const {
+  nextShadowingExplanationBatch,
+  markShadowingBatchFailed,
+  failShadowingImport,
+  markShadowingVideoReady,
+  failShadowingRegeneration
+} = proxyActivities<typeof shadowingActivities>({
+  startToCloseTimeout: '30 seconds',
+  retry: { maximumAttempts: 3, initialInterval: '1 second' }
+})
+
+/**
+ * Imports one video: prepare the transcript, then explain batches chosen by the
+ * database (prioritised first, Decision 1) until none is pending. A batch that
+ * exhausts its retries is marked failed and the loop continues; the video is
+ * ready once batch 0 has settled.
+ *
+ * @spec INV-SHADOW-007, INV-SHADOW-011, INV-SHADOW-021, INV-SHADOW-022
+ */
+export async function shadowingImportWorkflow(event: SerializedDomainEvent): Promise<void> {
+  const videoId = typeof event.payload.videoId === 'string' ? event.payload.videoId : undefined
+  if (!videoId) {
+    throw new Error(`Invalid shadowing.video_import_requested payload for event ${event.id}: missing videoId`)
+  }
+
+  try {
+    const prepared = await prepareShadowingTranscript(videoId)
+    if (prepared.outcome === 'gone') {
+      return
+    }
+  } catch (error) {
+    // temporal-observability:allow-swallow — the failure is stored on the video
+    // (status failed + reason + message); the activity boundary already logged it.
+    await failShadowingImport(videoId, shadowingFailureReasonOf(error), shadowingFailureMessageOf(error))
+    return
+  }
+
+  for (;;) {
+    const next = await nextShadowingExplanationBatch(videoId)
+    if (next === null) {
+      break
+    }
+    try {
+      await explainShadowingBatch(videoId, next.batchIndex)
+    } catch {
+      // temporal-observability:allow-swallow — retries are exhausted: the batch's
+      // sentences become failed (regenerate button) and the import continues (NFR-012).
+      await markShadowingBatchFailed(videoId, next.batchIndex)
+    }
+    if (next.batchIndex === 0) {
+      await markShadowingVideoReady(videoId)
+    }
+  }
+  // Idempotent; covers videos whose batch 0 was settled before this run.
+  await markShadowingVideoReady(videoId)
+}
+
+/**
+ * Regenerates one sentence's explanation (Decision 5); a final failure marks
+ * the sentence failed and keeps the previous explanation.
+ *
+ * @spec INV-SHADOW-012
+ */
+export async function shadowingRegenerateWorkflow(event: SerializedDomainEvent): Promise<void> {
+  const sentenceId = typeof event.payload.sentenceId === 'string' ? event.payload.sentenceId : undefined
+  if (!sentenceId) {
+    throw new Error(`Invalid shadowing.explanation_regenerate_requested payload for event ${event.id}: missing sentenceId`)
+  }
+
+  try {
+    await regenerateShadowingExplanation(sentenceId)
+  } catch (error) {
+    // temporal-observability:allow-swallow — the sentence becomes failed with the
+    // message and keeps its previous explanation.
+    await failShadowingRegeneration(sentenceId, shadowingFailureMessageOf(error))
+  }
 }

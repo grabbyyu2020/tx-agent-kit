@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+// Stand-in for the yt-dlp binary in shadowing-activities.integration.test.ts.
+// Appends its argv (one JSON array per line) to the file named by FAKE_YT_DLP_LOG,
+// then serves canned metadata (--dump-single-json) or writes a json3 caption file
+// (--write-subs / --write-auto-subs) for a fixed set of video ids.
+// Extensionless (ESM via the package's "type": "module") so `eslint src`, which
+// only has typed-lint settings for TypeScript, does not pick it up.
+import { appendFileSync, writeFileSync } from 'node:fs'
+
+const args = process.argv.slice(2)
+const logFile = process.env.FAKE_YT_DLP_LOG
+if (logFile) {
+  appendFileSync(logFile, `${JSON.stringify(args)}\n`)
+}
+
+const fail = (message) => {
+  process.stderr.write(`ERROR: ${message}\n`)
+  process.exit(1)
+}
+
+const separator = args.indexOf('--')
+const url = separator >= 0 ? args[separator + 1] : undefined
+const id = url ? new URL(url).searchParams.get('v') : null
+if (!id) {
+  fail('no URL after --')
+}
+
+const track = [{ ext: 'json3', url: 'https://example.invalid/captions' }]
+const metadataById = {
+  manualCap01: { subtitles: { en: track }, automatic_captions: { en: track } },
+  autoOnly001: { subtitles: {}, automatic_captions: { 'en-orig': track } },
+  noCaptions1: { subtitles: { fr: track }, automatic_captions: {} },
+  notEmbed001: { subtitles: { en: track }, automatic_captions: {}, playable_in_embed: false }
+}
+
+// "Hello world. This is a test. How are you?" with word-level offsets (manual track).
+const wordLevelCaptions = {
+  events: [
+    {
+      tStartMs: 1000,
+      dDurationMs: 3000,
+      segs: [
+        { utf8: 'hello', tOffsetMs: 0 },
+        { utf8: ' world', tOffsetMs: 500 },
+        { utf8: ' this', tOffsetMs: 1000 },
+        { utf8: ' is', tOffsetMs: 1500 },
+        { utf8: ' a', tOffsetMs: 2000 },
+        { utf8: ' test', tOffsetMs: 2500 }
+      ]
+    },
+    { tStartMs: 4000, dDurationMs: 1, aAppend: 1, segs: [{ utf8: '\n' }] },
+    {
+      tStartMs: 4000,
+      dDurationMs: 2000,
+      segs: [
+        { utf8: 'how', tOffsetMs: 0 },
+        { utf8: ' are', tOffsetMs: 700 },
+        { utf8: ' you', tOffsetMs: 1400 }
+      ]
+    }
+  ]
+}
+
+// Same words as cue-level captions (automatic track, no word offsets).
+const cueLevelCaptions = {
+  events: [
+    { tStartMs: 1000, dDurationMs: 3000, segs: [{ utf8: 'hello world this is a test' }] },
+    { tStartMs: 4000, dDurationMs: 2000, segs: [{ utf8: 'how are you' }] }
+  ]
+}
+
+if (id === 'failing0001') {
+  fail('Unable to extract video data (simulated)')
+}
+const metadata = metadataById[id]
+if (!metadata) {
+  fail(`unknown fixture video ${id}`)
+}
+
+if (args.includes('--dump-single-json')) {
+  process.stdout.write(
+    JSON.stringify({
+      id,
+      title: `Fixture video ${id}`,
+      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      duration: 6.4,
+      playable_in_embed: true,
+      ...metadata
+    })
+  )
+  process.exit(0)
+}
+
+const outputIndex = args.indexOf('-o')
+const langIndex = args.indexOf('--sub-langs')
+if (outputIndex < 0 || langIndex < 0) {
+  fail('expected -o and --sub-langs')
+}
+const lang = args[langIndex + 1]
+const output = args[outputIndex + 1].replace('%(id)s', id).replace('%(ext)s', `${lang}.json3`)
+const captions = args.includes('--write-subs') ? wordLevelCaptions : cueLevelCaptions
+writeFileSync(output, JSON.stringify(captions))

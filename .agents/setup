@@ -11,6 +11,8 @@ cd "$repo_root"
 # Temporal CLI version installed in .github/workflows/integration-tests.yml.
 NODE_VERSION="22.23.4"
 TEMPORAL_CLI_VERSION="1.1.2"
+# yt-dlp release used by the shadowing worker (YT_DLP_PATH defaults to `yt-dlp`).
+YT_DLP_VERSION="2026.10.26"
 
 step() {
   local label="$1"
@@ -158,6 +160,22 @@ install_temporal_cli() {
   curl -sSf https://temporal.download/cli.sh | sh -s -- --version "$TEMPORAL_CLI_VERSION"
 }
 
+# The release zipapp runs on the orb's python3; ~/.local/bin is on the orb PATH.
+install_yt_dlp() {
+  local bin="$HOME/.local/bin/yt-dlp"
+  if [[ "$("$bin" --version 2>/dev/null)" == "$YT_DLP_VERSION" ]]; then
+    echo "yt-dlp ${YT_DLP_VERSION} already installed"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  curl -fsSL -o "$tmp" "https://github.com/yt-dlp/yt-dlp/releases/download/${YT_DLP_VERSION}/yt-dlp"
+  chmod +x "$tmp"
+  mkdir -p "$(dirname "$bin")"
+  mv "$tmp" "$bin"
+  "$bin" --version
+}
+
 step "Install system packages" install_system_packages
 step "Keep inherited PATH in login shells" keep_inherited_path
 step "Install Node v${NODE_VERSION}" install_node
@@ -166,6 +184,7 @@ export PATH="$node_home/bin:$temporal_bin:$PATH"
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 step "Enable pnpm via corepack" enable_pnpm
 step "Install Temporal CLI ${TEMPORAL_CLI_VERSION}" install_temporal_cli
+step "Install yt-dlp ${YT_DLP_VERSION}" install_yt_dlp
 step "Install dependencies" pnpm install --frozen-lockfile
 step "Build workspace packages" pnpm exec turbo run build --filter='./packages/**'
 step "Initialize and migrate Postgres" init_database

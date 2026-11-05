@@ -40,7 +40,8 @@ const baseEnv = {
   DRIP_SWEEP_BATCH_SIZE: 100,
   DRIP_SWEEP_MAX_BATCHES: 50,
   LIFECYCLE_SCAN_INTERVAL_HOURS: 24,
-    STRIPE_SECRET_KEY: undefined
+    STRIPE_SECRET_KEY: undefined,
+    YT_DLP_PATH: 'yt-dlp'
 }
 
 const probeSpotlight = async (): Promise<boolean> => {

@@ -4,6 +4,7 @@ const defaultTemporalNamespace = 'default'
 const defaultTemporalTaskQueue = 'tx-agent-kit'
 const defaultEmailCampaignsTaskQueue = 'email-campaigns'
 const defaultNodeEnv = 'development'
+const defaultYtDlpPath = 'yt-dlp'
 
 const runtimeModes = ['cli', 'cloud'] as const
 
@@ -77,6 +78,13 @@ export interface WorkerEnv {
    * @spec billing-and-pricing-design
    */
   STRIPE_SECRET_KEY: string | undefined
+  /**
+   * yt-dlp executable run by the shadowing import activities (a bare name is
+   * resolved on PATH). Default `yt-dlp`.
+   *
+   * @spec INV-SHADOW-020
+   */
+  YT_DLP_PATH: string
 }
 
 export interface WorkerTemporalTlsOptions {
@@ -350,7 +358,8 @@ export const getWorkerEnv = (): WorkerEnv => {
     DRIP_SWEEP_BATCH_SIZE: resolvedDripSweepBatchSize,
     DRIP_SWEEP_MAX_BATCHES: resolvedDripSweepMaxBatches,
     LIFECYCLE_SCAN_INTERVAL_HOURS: resolvedLifecycleScanIntervalHours,
-    STRIPE_SECRET_KEY: parseOptionalStringEnv(process.env.STRIPE_SECRET_KEY)
+    STRIPE_SECRET_KEY: parseOptionalStringEnv(process.env.STRIPE_SECRET_KEY),
+    YT_DLP_PATH: parseOptionalStringEnv(process.env.YT_DLP_PATH) ?? defaultYtDlpPath
   }
 
   validateWorkerEnv(env)
