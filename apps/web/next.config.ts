@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   // build, so there is no eslint key to disable here.)
   typescript: { ignoreBuildErrors: true },
   transpilePackages: ['@tx-agent-kit/contracts'],
+  // Dev-only: let Amp orb portal hosts load Next dev resources (HMR, chunks, fonts).
+  allowedDevOrigins: ['*.onamp.dev'],
   env: {
     NEXT_PUBLIC_API_BASE_URL:
       process.env.NEXT_PUBLIC_API_BASE_URL ??
