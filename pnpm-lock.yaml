@@ -534,6 +534,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@tx-agent-kit/ai':
+        specifier: workspace:*
+        version: link:../infra/ai
       '@tx-agent-kit/auth':
         specifier: workspace:*
         version: link:../infra/auth

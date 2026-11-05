@@ -12,6 +12,7 @@
     "test": "vitest run -c vitest.config.ts"
   },
   "dependencies": {
+    "@tx-agent-kit/ai": "workspace:*",
     "@tx-agent-kit/auth": "workspace:*",
     "@tx-agent-kit/contracts": "workspace:*",
     "@tx-agent-kit/db": "workspace:*",
