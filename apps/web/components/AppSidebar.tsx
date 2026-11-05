@@ -179,6 +179,17 @@ const navItems: NavItem[] = [
   }
 ]
 
+const IconShadowing = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="22" />
+  </svg>
+)
+
+const shadowingHref = '/shadowing'
+const shadowingLabel = '跟读练习'
+
 const workspacesItem: NavItem = {
   label: 'Workspaces',
   icon: IconGrid,
@@ -718,6 +729,20 @@ export function AppSidebar({
                   </SidebarMenuItem>
                 )
               })}
+              {/* User-level (not org/workspace scoped), so always enabled. */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith(shadowingHref)}>
+                  <Link
+                    href={shadowingHref}
+                    aria-label={isCollapsed ? shadowingLabel : undefined}
+                    title={shadowingLabel}
+                    onClick={(event) => handleSidebarLinkClick(event, shadowingHref, false)}
+                  >
+                    <IconShadowing />
+                    {!isCollapsed && <span className="overflow-hidden whitespace-nowrap text-ellipsis">{shadowingLabel}</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

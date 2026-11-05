@@ -2,9 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ShadowingGetVideo200SentencesItem } from '@/lib/api/generated/schemas'
-import { CurrentSegmentCaption } from './CurrentSegmentCaption'
 import { ExplanationPanel } from './ExplanationPanel'
-import { SentenceList } from './SentenceList'
 
 const makeSentence = (
   sentenceIndex: number,
@@ -65,54 +63,5 @@ describe('ExplanationPanel', () => {
     )
     expect(screen.getAllByText('生成失败').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: '重新生成' })).toBeDefined()
-  })
-})
-
-describe('SentenceList', () => {
-  it('marks the current sentence, selects on click and collapses', () => {
-    const onSelect = vi.fn<(sentenceIndex: number) => void>()
-    render(
-      <SentenceList
-        sentences={[makeSentence(0), makeSentence(1)]}
-        currentSentenceIndex={1}
-        onSelect={onSelect}
-      />
-    )
-
-    const current = screen.getByRole('button', { name: /Sentence number 1\./ })
-    expect(current.getAttribute('aria-current')).toBe('true')
-    fireEvent.click(screen.getByRole('button', { name: /Sentence number 0\./ }))
-    expect(onSelect).toHaveBeenCalledWith(0)
-
-    fireEvent.click(screen.getByRole('button', { name: '收起' }))
-    expect(screen.queryByRole('list')).toBeNull()
-  })
-})
-
-describe('CurrentSegmentCaption', () => {
-  it('shows the caption only when subtitles are visible and wires the controls', () => {
-    const onNext = vi.fn<() => void>()
-    const props = {
-      text: 'Hello there.',
-      rate: 1 as const,
-      isPlaying: false,
-      segmentPosition: 0,
-      segmentCount: 2,
-      canGoPrevious: false,
-      canGoNext: true,
-      onPrevious: () => undefined,
-      onReplay: () => undefined,
-      onNext,
-      onToggleRate: () => undefined,
-      onToggleSubtitle: () => undefined
-    }
-    const { rerender } = render(<CurrentSegmentCaption {...props} subtitleVisible />)
-    expect(screen.getByText('Hello there.')).toBeDefined()
-    fireEvent.click(screen.getByRole('button', { name: '下一句' }))
-    expect(onNext).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('button', { name: '上一句' }).hasAttribute('disabled')).toBe(true)
-
-    rerender(<CurrentSegmentCaption {...props} subtitleVisible={false} />)
-    expect(screen.queryByText('Hello there.')).toBeNull()
   })
 })

@@ -212,6 +212,17 @@ describe('AppSidebar', () => {
     expect(settingsSection.className).toContain('grid-rows-[0fr]')
   })
 
+  it('links to the user-level shadowing library and marks it active on shadowing routes', () => {
+    pathnameMock.mockReturnValue('/shadowing/video_1')
+
+    renderSidebar()
+
+    const link = screen.getByRole('link', { name: '跟读练习' })
+    expect(link.getAttribute('href')).toBe('/shadowing')
+    expect(link.getAttribute('aria-disabled')).toBeNull()
+    expect(link.getAttribute('data-active')).toBe('true')
+  })
+
   it('prefetches the assets list query when hovering the Media nav link', async () => {
     const user = userEvent.setup()
     const prefetchSpy = vi
