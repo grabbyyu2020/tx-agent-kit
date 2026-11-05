@@ -1,9 +1,23 @@
 export {
   clearAiEnvOverrides,
   getAiEnv,
+  getShadowingLlmEnv,
   setAiEnvOverride,
-  type AiEnv
+  ShadowingLlmNotConfiguredError,
+  type AiEnv,
+  type AiEnvKey,
+  type ShadowingLlmEnv
 } from './env.js'
+export {
+  ChatCompletionError,
+  ChatCompletionErrorReason,
+  chatCompletionsJson,
+  type ChatCompletionMessage,
+  type ChatCompletionOptions,
+  type ChatCompletionRequest,
+  type ChatCompletionResult,
+  type ChatCompletionUsage
+} from './openai-compatible.js'
 export { AiError } from './errors.js'
 export {
   callModel,
