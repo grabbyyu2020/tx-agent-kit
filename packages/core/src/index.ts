@@ -138,6 +138,34 @@ export type {
   ShadowingVideoImportRequestedEventPayload,
   ShadowingExplanationRegenerateRequestedEventPayload
 } from './domains/shadowing/events.js'
+export { ShadowingService, ShadowingServiceLive } from './domains/shadowing/application/shadowing-service.js'
+export {
+  ShadowingImportService,
+  ShadowingImportServiceLive,
+  type PrepareShadowingTranscriptResult
+} from './domains/shadowing/application/shadowing-import-service.js'
+export {
+  ShadowingStorePort,
+  CaptionSourcePort,
+  ShadowingLlmPort,
+  type ShadowingVideoSource,
+  type ExplainBatchInput
+} from './domains/shadowing/ports/shadowing-ports.js'
+export { ShadowingStorePortLive } from './domains/shadowing/adapters/shadowing-store.js'
+export { YtDlpCaptionSourceLive } from './domains/shadowing/adapters/yt-dlp-caption-source.js'
+export { ShadowingLlmPortLive } from './domains/shadowing/adapters/shadowing-llm.js'
+export type {
+  ShadowingVideoRecord,
+  ShadowingSentenceRecord,
+  ShadowingSegmentRecord,
+  ShadowingVideoDetailAggregate,
+  ImportShadowingVideoResult
+} from './domains/shadowing/domain/shadowing-domain.js'
+export {
+  classifyShadowingImportError,
+  type ShadowingImportError,
+  type ShadowingImportFailureSummary
+} from './domains/shadowing/domain/shadowing-errors.js'
 export {
   displayName,
   isProcessing,

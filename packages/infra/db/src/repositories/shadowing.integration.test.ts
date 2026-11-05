@@ -268,6 +268,20 @@ describe('shadowingRepository', () => {
     expect((await eventsFor(videoId)).filter((event) => event.event_type === 'shadowing.explanation_regenerate_requested')).toHaveLength(2)
   })
 
+  it('findSentenceById returns the sentence while it exists and none after its video is deleted', async () => {
+    const { videoId } = await createVideoWithTranscript(2, 2)
+    const [, second] = await run(shadowingRepository.listSentences(videoId))
+    if (!second) {
+      throw new Error('expected two sentences')
+    }
+
+    expect(await run(shadowingRepository.findSentenceById(second.id))).toEqual(Option.some(second))
+    expect(await run(shadowingRepository.findSentenceById(randomUUID()))).toEqual(Option.none())
+
+    await run(shadowingRepository.deleteVideo(videoId))
+    expect(await run(shadowingRepository.findSentenceById(second.id))).toEqual(Option.none())
+  })
+
   it('deleting a video cascades to its sentences and segments and leaves other videos untouched [INV-SHADOW-017]', async () => {
     const doomed = await createVideoWithTranscript(3, 2)
     const kept = await createVideoWithTranscript(2, 2)

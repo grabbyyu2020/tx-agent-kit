@@ -1,3 +1,4 @@
+import type { ShadowingFailureReason } from '@tx-agent-kit/contracts'
 import { Data } from 'effect'
 
 /** The video has no usable English caption track. */
@@ -48,3 +49,55 @@ export class ExplanationDecodeError extends Data.TaggedError('ExplanationDecodeE
   readonly message: string
   readonly sentenceIndex?: number
 }> {}
+
+/** A store (database) operation failed while importing or explaining; always retryable. */
+export class ShadowingStoreError extends Data.TaggedError('ShadowingStoreError')<{
+  readonly message: string
+  readonly cause?: unknown
+}> {}
+
+/** Every failure the worker-side shadowing use cases can report. */
+export type ShadowingImportError =
+  | NoCaptionsError
+  | NotEmbeddableError
+  | CaptionSourceError
+  | LlmCallError
+  | LlmNotConfiguredError
+  | SentenceAlignmentError
+  | ShadowingStoreError
+
+/** How a failed import step is reported: the stored failure reason, its message, and whether to retry. */
+export interface ShadowingImportFailureSummary {
+  readonly reason: ShadowingFailureReason
+  readonly message: string
+  readonly retryable: boolean
+}
+
+/**
+ * Classify a worker-side failure. Missing captions, non-embeddable videos and a missing LLM
+ * configuration can never succeed on retry; everything else (yt-dlp, network, LLM output,
+ * alignment, database) is retryable and reported as `import_error`.
+ */
+export const classifyShadowingImportError = (error: ShadowingImportError): ShadowingImportFailureSummary => {
+  switch (error._tag) {
+    case 'NoCaptionsError': {
+      return { reason: 'no_captions', message: `Video ${error.youtubeVideoId} has no English captions`, retryable: false }
+    }
+    case 'NotEmbeddableError': {
+      return { reason: 'not_embeddable', message: `Video ${error.youtubeVideoId} cannot be embedded`, retryable: false }
+    }
+    case 'LlmNotConfiguredError': {
+      return {
+        reason: 'import_error',
+        message: `LLM is not configured; missing environment variables: ${error.missing.join(', ')}`,
+        retryable: false
+      }
+    }
+    case 'CaptionSourceError':
+    case 'LlmCallError':
+    case 'SentenceAlignmentError':
+    case 'ShadowingStoreError': {
+      return { reason: 'import_error', message: error.message, retryable: true }
+    }
+  }
+}

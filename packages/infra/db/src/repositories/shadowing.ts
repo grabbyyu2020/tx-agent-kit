@@ -504,6 +504,23 @@ export const shadowingRepository = {
   listSentences: (videoId: string) =>
     withDb('Failed to list shadowing sentences', (db) => selectSentences(db, videoId)),
 
+  /** The sentence with this id; none when it (or its video) no longer exists. */
+  findSentenceById: (sentenceId: string) =>
+    withDb('Failed to fetch shadowing sentence', (db) =>
+      Effect.gen(function* () {
+        const rows = yield* db
+          .select()
+          .from(shadowingSentences)
+          .where(eq(shadowingSentences.id, sentenceId))
+          .limit(1)
+          .execute()
+        const decoded = yield* decodeSentenceRows(rows).pipe(
+          Effect.mapError((error) => dbDecodeFailed('shadowing sentence row decode failed', error))
+        )
+        return Option.fromNullable(decoded[0])
+      })
+    ),
+
   /**
    * Stores explanations for sentences of `batchIndex` that are still `pending`
    * (sentences moved to another status meanwhile are left alone). Returns the

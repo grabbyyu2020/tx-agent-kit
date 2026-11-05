@@ -7,6 +7,7 @@
  *   - billing-row-mappers.ts     — billing settings, usage, ledger mappers
  *   - team-row-mappers.ts        — team, member, review token mappers
  *   - assets-row-mappers.ts      — media asset, upload, metering, collection mappers
+ *   - shadowing-row-mappers.ts   — shadowing video, sentence, segment, detail mappers
  */
 export { toRecord, mapPaginatedResult, mapNullable, mapOptional } from './row-mapper-utils.js'
 export { toAuthUserRecord, toOrganizationUserRecord } from './auth-row-mappers.js'
@@ -45,3 +46,10 @@ export {
   toCollectionRecordPage
 } from './assets-row-mappers.js'
 export { toNotificationRecord } from './notification-row-mappers.js'
+export {
+  toShadowingVideoRecord,
+  toShadowingSentenceRecord,
+  toShadowingSegmentRecord,
+  toShadowingVideoDetailAggregate,
+  toImportShadowingVideoResult
+} from './shadowing-row-mappers.js'
