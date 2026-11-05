@@ -2615,6 +2615,318 @@
       "requiresConfirmation": true
     },
     {
+      "key": "shadowing.delete_video",
+      "apiOperationId": "shadowing.deleteVideo",
+      "apiMethod": "DELETE",
+      "apiPath": "/v1/shadowing/videos/{videoId}",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing delete-video",
+      "mcpTool": "tx_agent_kit_shadowing_delete_video",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
+      "key": "shadowing.get_video",
+      "apiOperationId": "shadowing.getVideo",
+      "apiMethod": "GET",
+      "apiPath": "/v1/shadowing/videos/{videoId}",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing get-video",
+      "mcpTool": "tx_agent_kit_shadowing_get_video",
+      "mutating": false,
+      "requiresConfirmation": false
+    },
+    {
+      "key": "shadowing.import_video",
+      "apiOperationId": "shadowing.importVideo",
+      "apiMethod": "POST",
+      "apiPath": "/v1/shadowing/videos",
+      "schema": {
+        "parameters": {
+          "path": [],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": {
+          "required": true,
+          "contentTypes": [
+            "application/json"
+          ]
+        },
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing import-video",
+      "mcpTool": "tx_agent_kit_shadowing_import_video",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
+      "key": "shadowing.list_videos",
+      "apiOperationId": "shadowing.listVideos",
+      "apiMethod": "GET",
+      "apiPath": "/v1/shadowing/videos",
+      "schema": {
+        "parameters": {
+          "path": [],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing list-videos",
+      "mcpTool": "tx_agent_kit_shadowing_list_videos",
+      "mutating": false,
+      "requiresConfirmation": false
+    },
+    {
+      "key": "shadowing.prioritize_sentence",
+      "apiOperationId": "shadowing.prioritizeSentence",
+      "apiMethod": "POST",
+      "apiPath": "/v1/shadowing/videos/{videoId}/sentences/{sentenceIndex}/prioritize",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            },
+            {
+              "name": "sentenceIndex",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing prioritize-sentence",
+      "mcpTool": "tx_agent_kit_shadowing_prioritize_sentence",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
+      "key": "shadowing.regenerate_explanation",
+      "apiOperationId": "shadowing.regenerateExplanation",
+      "apiMethod": "POST",
+      "apiPath": "/v1/shadowing/videos/{videoId}/sentences/{sentenceIndex}/regenerate",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            },
+            {
+              "name": "sentenceIndex",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "202",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing regenerate-explanation",
+      "mcpTool": "tx_agent_kit_shadowing_regenerate_explanation",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
+      "key": "shadowing.retry_import",
+      "apiOperationId": "shadowing.retryImport",
+      "apiMethod": "POST",
+      "apiPath": "/v1/shadowing/videos/{videoId}/retry",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": null,
+        "responseStatuses": [
+          "202",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing retry-import",
+      "mcpTool": "tx_agent_kit_shadowing_retry_import",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
+      "key": "shadowing.save_progress",
+      "apiOperationId": "shadowing.saveProgress",
+      "apiMethod": "PUT",
+      "apiPath": "/v1/shadowing/videos/{videoId}/progress",
+      "schema": {
+        "parameters": {
+          "path": [
+            {
+              "name": "videoId",
+              "in": "path",
+              "required": true
+            }
+          ],
+          "query": [],
+          "header": [],
+          "cookie": []
+        },
+        "requestBody": {
+          "required": true,
+          "contentTypes": [
+            "application/json"
+          ]
+        },
+        "responseStatuses": [
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409",
+          "429",
+          "500"
+        ]
+      },
+      "apiStatus": "implemented",
+      "admin": false,
+      "cliCommand": "shadowing save-progress",
+      "mcpTool": "tx_agent_kit_shadowing_save_progress",
+      "mutating": true,
+      "requiresConfirmation": true
+    },
+    {
       "key": "storage.delete_object",
       "apiOperationId": "storage.deleteObject",
       "apiMethod": "POST",

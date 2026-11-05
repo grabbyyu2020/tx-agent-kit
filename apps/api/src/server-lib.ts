@@ -63,7 +63,9 @@ import {
   UsageCapStorePortLive,
   makeUsageCapService,
   AutoFixRunStoreLive,
-  AutoFixRunStoreTestLive
+  AutoFixRunStoreTestLive,
+  ShadowingServiceLive,
+  ShadowingStorePortLive
 } from '@tx-agent-kit/core'
 import { createLogger } from '@tx-agent-kit/logging'
 import { startTelemetry, stopTelemetry } from '@tx-agent-kit/observability'
@@ -103,6 +105,7 @@ import { AutoFixTriggerStubLive } from './adapters/auto-fix-trigger-stub.js'
 import { StorageLive as StorageServiceLive } from '@tx-agent-kit/storage'
 import { AssetsLive } from './routes/assets.js'
 import { StorageMeteringLive } from './routes/storage-metering.js'
+import { ShadowingLive } from './routes/shadowing.js'
 
 const logger = createLogger('tx-agent-kit-api').child('server')
 
@@ -120,7 +123,8 @@ const ApiLive = HttpApiBuilder.api(TxAgentApi).pipe(
   Layer.provide(EmailCampaignsLive),
   Layer.provide(EmailWebhooksLive),
   Layer.provide(SentryWebhooksLive),
-  Layer.provide(EmailUnsubscribeLive)
+  Layer.provide(EmailUnsubscribeLive),
+  Layer.provide(ShadowingLive)
 )
 
 const MiddlewareLive = Layer.mergeAll(
@@ -196,7 +200,8 @@ const PortDependenciesLive = Layer.mergeAll(
   EnrollmentStorePortLive,
   EmailSendStorePortLive,
   UnsubscribeStorePortLive,
-  SuppressionStorePortLive
+  SuppressionStorePortLive,
+  ShadowingStorePortLive
 )
 
 const CreditServicePortLive = Layer.effect(CreditServicePort, makeCreditService)
@@ -225,7 +230,8 @@ const ServiceDependenciesLive = Layer.mergeAll(
   CreditServicePortLive,
   StorageBillingServicePortLive,
   UsageCapServicePortLive,
-  EmailCampaignServiceLive
+  EmailCampaignServiceLive,
+  ShadowingServiceLive
 )
 
 // Auto-fix trigger seam: the live Temporal-backed adapter, OR (test-only, when

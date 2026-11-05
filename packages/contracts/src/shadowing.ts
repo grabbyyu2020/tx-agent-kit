@@ -86,6 +86,14 @@ export const saveShadowingProgressBodySchema = Schema.Struct({
   segmentIndex: Schema.Int.pipe(Schema.nonNegative())
 })
 
+export const shadowingProgressResponseSchema = Schema.Struct({
+  lastSegmentIndex: Schema.Int
+})
+
+export const shadowingPrioritizeResponseSchema = Schema.Struct({
+  prioritized: Schema.Boolean
+})
+
 // --- Type exports ---
 
 export type ImportShadowingVideoBody = Schema.Schema.Type<typeof importShadowingVideoBodySchema>
@@ -98,3 +106,5 @@ export type ShadowingSentence = Schema.Schema.Type<typeof shadowingSentenceSchem
 export type ShadowingSegment = Schema.Schema.Type<typeof shadowingSegmentSchema>
 export type ShadowingVideoDetail = Schema.Schema.Type<typeof shadowingVideoDetailSchema>
 export type SaveShadowingProgressBody = Schema.Schema.Type<typeof saveShadowingProgressBodySchema>
+export type ShadowingProgressResponse = Schema.Schema.Type<typeof shadowingProgressResponseSchema>
+export type ShadowingPrioritizeResponse = Schema.Schema.Type<typeof shadowingPrioritizeResponseSchema>
