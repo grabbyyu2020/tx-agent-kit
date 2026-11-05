@@ -117,3 +117,23 @@ export const AUTO_FIX_DAILY_QUOTA = 5 as const
  * Past ~4h an agent is almost certainly stuck/looping, so we cap there.
  */
 export const AUTO_FIX_ACTIVITY_TIMEOUT_MS = 4 * 60 * 60 * 1000 // 4 hours
+
+// ── Shadowing practice ──────────────────────────────────────────────
+
+/** Maximum words in one practice segment before a sentence is split. */
+export const SHADOWING_SEGMENT_MAX_WORDS = 25
+
+/** Maximum duration (ms) of one practice segment before a sentence is split. */
+export const SHADOWING_SEGMENT_MAX_MS = 8000
+
+/** Number of sentences explained together in one LLM batch. */
+export const SHADOWING_EXPLANATION_BATCH_SIZE = 20
+
+/** Attempts per explanation batch before its sentences are marked failed. */
+export const SHADOWING_EXPLANATION_MAX_ATTEMPTS = 3
+
+/** Padding (ms) added after a segment's end before the player pauses. */
+export const SHADOWING_PAUSE_PADDING_MS = 200
+
+/** Words of transcript sent to the LLM per sentence-segmentation call. */
+export const SHADOWING_SEGMENTATION_CHUNK_WORDS = 1500

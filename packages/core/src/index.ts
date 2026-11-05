@@ -133,6 +133,11 @@ export type {
 } from './domains/assets/domain/assets-domain.js'
 export { assetsEvents, assetsEventVersions } from './domains/assets/events.js'
 export type { AssetsThumbnailRequestedEventPayload } from './domains/assets/events.js'
+export { shadowingEvents, shadowingEventVersions } from './domains/shadowing/events.js'
+export type {
+  ShadowingVideoImportRequestedEventPayload,
+  ShadowingExplanationRegenerateRequestedEventPayload
+} from './domains/shadowing/events.js'
 export {
   displayName,
   isProcessing,

@@ -124,6 +124,8 @@ export const domainEventTypes = [
   'billing.recharge_requires_action',
   'billing.welcome_credit_granted',
   'assets.thumbnail_requested',
+  'shadowing.video_import_requested',
+  'shadowing.explanation_regenerate_requested',
   'lifecycle.signed_up',
   'lifecycle.trial_started',
   'lifecycle.onboarding_completed',
@@ -134,8 +136,20 @@ export const domainEventTypes = [
 ] as const
 export type DomainEventType = (typeof domainEventTypes)[number]
 
-export const domainEventAggregateTypes = ['organization', 'team', 'billing', 'assets', 'email_campaigns', 'lifecycle'] as const
+export const domainEventAggregateTypes = ['organization', 'team', 'billing', 'assets', 'email_campaigns', 'lifecycle', 'shadowing'] as const
 export type DomainEventAggregateType = (typeof domainEventAggregateTypes)[number]
+
+export const shadowingVideoStatuses = ['importing', 'explaining', 'ready', 'failed'] as const
+export type ShadowingVideoStatus = (typeof shadowingVideoStatuses)[number]
+
+export const shadowingFailureReasons = ['no_captions', 'not_embeddable', 'import_error'] as const
+export type ShadowingFailureReason = (typeof shadowingFailureReasons)[number]
+
+export const shadowingExplanationStatuses = ['pending', 'ready', 'failed', 'regenerating'] as const
+export type ShadowingExplanationStatus = (typeof shadowingExplanationStatuses)[number]
+
+export const shadowingCaptionKinds = ['manual', 'auto'] as const
+export type ShadowingCaptionKind = (typeof shadowingCaptionKinds)[number]
 
 /**
  * The lifecycle event types that drive the lifecycle email engine. This is the

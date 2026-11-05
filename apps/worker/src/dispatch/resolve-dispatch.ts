@@ -133,6 +133,40 @@ export function resolveDispatch(
         workflowRunTimeout: '10 minutes'
       }
     }
+    case 'shadowing.video_import_requested': {
+      const hasValidPayload =
+        typeof payload.videoId === 'string'
+        && typeof payload.userId === 'string'
+
+      if (!hasValidPayload) {
+        return { kind: 'invalid', reason: `Invalid shadowing.video_import_requested payload for event ${event.id}: missing videoId or userId` }
+      }
+
+      return {
+        kind: 'start',
+        workflowType: 'shadowingImportWorkflow',
+        workflowId: `shadowing-import-${event.id}`,
+        args: [event],
+        workflowRunTimeout: '24 hours'
+      }
+    }
+    case 'shadowing.explanation_regenerate_requested': {
+      const hasValidPayload =
+        typeof payload.videoId === 'string'
+        && typeof payload.sentenceId === 'string'
+
+      if (!hasValidPayload) {
+        return { kind: 'invalid', reason: `Invalid shadowing.explanation_regenerate_requested payload for event ${event.id}: missing videoId or sentenceId` }
+      }
+
+      return {
+        kind: 'start',
+        workflowType: 'shadowingRegenerateWorkflow',
+        workflowId: `shadowing-regenerate-${event.id}`,
+        args: [event],
+        workflowRunTimeout: '15 minutes'
+      }
+    }
     // @spec INV-BILLING-010 — billing domain events fan out to one workflow per
     // event. Workflows are started independently of the dispatcher's progress.
     case 'billing.credits_purchased': {

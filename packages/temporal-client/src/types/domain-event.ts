@@ -157,6 +157,20 @@ export const AssetsThumbnailRequestedEventPayloadSchema = Schema.Struct({
 
 export type AssetsThumbnailRequestedEventPayload = Schema.Schema.Type<typeof AssetsThumbnailRequestedEventPayloadSchema>
 
+export const ShadowingVideoImportRequestedEventPayloadSchema = Schema.Struct({
+  videoId: Schema.UUID,
+  userId: Schema.UUID
+})
+
+export type ShadowingVideoImportRequestedEventPayload = Schema.Schema.Type<typeof ShadowingVideoImportRequestedEventPayloadSchema>
+
+export const ShadowingExplanationRegenerateRequestedEventPayloadSchema = Schema.Struct({
+  videoId: Schema.UUID,
+  sentenceId: Schema.UUID
+})
+
+export type ShadowingExplanationRegenerateRequestedEventPayload = Schema.Schema.Type<typeof ShadowingExplanationRegenerateRequestedEventPayloadSchema>
+
 export const EmailCampaignsEnrollmentTriggeredEventPayloadSchema = Schema.Struct({
   campaignId: Schema.UUID,
   userId: Schema.UUID,
