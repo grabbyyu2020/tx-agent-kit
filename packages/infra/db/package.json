@@ -10,6 +10,7 @@
     "type-check": "tsc -b --pretty false",
     "lint": "eslint src --max-warnings=0",
     "test": "vitest run -c vitest.config.ts",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "pnpm exec tsx ./scripts/migrate.ts",
     "db:schemas:generate": "pnpm exec tsx ./scripts/generate-schemas.ts",

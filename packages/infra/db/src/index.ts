@@ -47,6 +47,17 @@ export { storageMeteringRepository } from './repositories/storage-metering.js'
 export { storageUsageRepository } from './repositories/storage-usage.js'
 export { mediaCollectionsRepository } from './repositories/media-collections.js'
 export { autoFixRunsRepository } from './repositories/auto-fix-runs.js'
+export {
+  shadowingRepository,
+  shadowingVideoRecordSchema,
+  type InsertShadowingVideoInput,
+  type NewShadowingSegmentInput,
+  type NewShadowingSentenceInput,
+  type ShadowingVideoDetailShape,
+  type ShadowingVideoFailureInput,
+  type ShadowingVideoMetadataInput,
+  type ShadowingVideoRecordShape
+} from './repositories/shadowing.js'
 export { systemSettingsRepository, type RetentionSettings, type RetentionTableConfig } from './repositories/system-settings.js'
 export {
   defaultRetentionSettings,

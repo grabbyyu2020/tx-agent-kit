@@ -20,8 +20,13 @@ import {
   membershipTypes,
   pendingUploadStatuses,
   processingStatuses,
+  shadowingCaptionKinds,
+  shadowingExplanationStatuses,
+  shadowingFailureReasons,
+  shadowingVideoStatuses,
   subscriptionStatuses,
-  type OrganizationOnboardingData
+  type OrganizationOnboardingData,
+  type ShadowingExplanation
 } from '@tx-agent-kit/contracts'
 import {
   bigint,
@@ -923,3 +928,69 @@ export const autoFixRuns = pgTable('auto_fix_runs', {
 ])
 
 export type AutoFixRunRow = typeof autoFixRuns.$inferSelect
+
+// ── YouTube shadowing (per-user practice library) ────────────────────
+//
+// One row per (user, YouTube id). Sentences and segments are derived data that
+// the import workflow replaces in one transaction; both cascade with the video.
+// CHECK constraints (youtube id format, status ⇔ failure_reason, explanation
+// status ⇔ explanation presence) live in migration 0057_shadowing.sql.
+// Not covered by retention policies (NFR-040).
+//
+// @spec youtube-shadowing-design §"Data Model"
+export const shadowingVideos = pgTable('shadowing_videos', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  youtubeVideoId: text('youtube_video_id').notNull(),
+  title: text('title').notNull().default(''),
+  thumbnailUrl: text('thumbnail_url'),
+  durationSeconds: integer('duration_seconds'),
+  captionKind: text('caption_kind', { enum: shadowingCaptionKinds }),
+  status: text('status', { enum: shadowingVideoStatuses }).notNull().default('importing'),
+  failureReason: text('failure_reason', { enum: shadowingFailureReasons }),
+  failureMessage: text('failure_message'),
+  sentenceCount: integer('sentence_count').notNull().default(0),
+  lastSegmentIndex: integer('last_segment_index').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+}, (table) => [
+  uniqueIndex('shadowing_videos_user_youtube_unique').on(table.userId, table.youtubeVideoId),
+  index('shadowing_videos_user_created_idx').on(table.userId, table.createdAt.desc())
+])
+
+export const shadowingSentences = pgTable('shadowing_sentences', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  videoId: uuid('video_id').notNull().references(() => shadowingVideos.id, { onDelete: 'cascade' }),
+  sentenceIndex: integer('sentence_index').notNull(),
+  batchIndex: integer('batch_index').notNull(),
+  text: text('text').notNull(),
+  startMs: integer('start_ms').notNull(),
+  endMs: integer('end_ms').notNull(),
+  explanation: jsonb('explanation').$type<ShadowingExplanation>(),
+  explanationStatus: text('explanation_status', { enum: shadowingExplanationStatuses }).notNull().default('pending'),
+  explanationRequestedAt: timestamp('explanation_requested_at', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+}, (table) => [
+  uniqueIndex('shadowing_sentences_video_index_unique').on(table.videoId, table.sentenceIndex),
+  index('shadowing_sentences_pending_idx').on(table.videoId, table.explanationStatus, table.batchIndex)
+])
+
+export const shadowingSegments = pgTable('shadowing_segments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  videoId: uuid('video_id').notNull().references(() => shadowingVideos.id, { onDelete: 'cascade' }),
+  sentenceId: uuid('sentence_id').notNull().references(() => shadowingSentences.id, { onDelete: 'cascade' }),
+  segmentIndex: integer('segment_index').notNull(),
+  sentenceIndex: integer('sentence_index').notNull(),
+  text: text('text').notNull(),
+  startMs: integer('start_ms').notNull(),
+  endMs: integer('end_ms').notNull()
+}, (table) => [
+  uniqueIndex('shadowing_segments_video_index_unique').on(table.videoId, table.segmentIndex)
+])
+
+export type ShadowingVideoRow = typeof shadowingVideos.$inferSelect
+export type ShadowingVideoInsert = typeof shadowingVideos.$inferInsert
+export type ShadowingSentenceRow = typeof shadowingSentences.$inferSelect
+export type ShadowingSentenceInsert = typeof shadowingSentences.$inferInsert
+export type ShadowingSegmentRow = typeof shadowingSegments.$inferSelect
+export type ShadowingSegmentInsert = typeof shadowingSegments.$inferInsert
