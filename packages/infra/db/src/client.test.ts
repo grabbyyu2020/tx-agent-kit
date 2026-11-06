@@ -1,6 +1,7 @@
 import { Effect } from 'effect'
 import { EventEmitter } from 'node:events'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { getPgSslConfigForDatabaseUrl, normalizeDatabaseUrlForPgDriver } from './client.js'
 
 const databaseUrl = 'postgres://test:test@db.example.com:5432/tx_agent_kit'
 
@@ -13,11 +14,7 @@ afterEach(() => {
 })
 
 describe('provideDB', () => {
-  it('uses libpq-compatible SSL semantics for sslmode=require URLs', async () => {
-    const { getPgSslConfigForDatabaseUrl, normalizeDatabaseUrlForPgDriver } = await import(
-      './client.js'
-    )
-
+  it('uses libpq-compatible SSL semantics for sslmode=require URLs', () => {
     expect(
       getPgSslConfigForDatabaseUrl(
         'postgresql://user:pass@db.example.com:5432/app?sslmode=require'

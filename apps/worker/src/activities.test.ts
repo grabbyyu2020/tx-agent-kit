@@ -1,26 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Context, Effect, Layer } from 'effect'
-
-class MockStorage extends Context.Tag('@tx-agent-kit/storage/Storage')<
-  MockStorage,
-  {
-    generateUploadUrl(key: string, contentType: string, expiresIn?: number): Effect.Effect<string>
-    generateDownloadUrl(key: string, expiresIn?: number): Effect.Effect<string>
-    putObject(key: string, body: Uint8Array, contentType: string): Effect.Effect<void>
-    getObject(key: string): Effect.Effect<Uint8Array>
-    deleteObject(key: string): Effect.Effect<void>
-    listObjects(prefix?: string): Effect.Effect<readonly string[]>
-    getObjectMetadata(key: string): Effect.Effect<{
-      key: string
-      contentType: string | undefined
-      contentLength: number | undefined
-      lastModified: Date | undefined
-      etag: string | undefined
-    }>
-  }
->() {}
+import { storageActivities } from './activities.js'
 
 vi.mock('@tx-agent-kit/storage', () => {
+  class MockStorage extends Context.Tag('@tx-agent-kit/storage/Storage')<
+    MockStorage,
+    {
+      generateUploadUrl(key: string, contentType: string, expiresIn?: number): Effect.Effect<string>
+      generateDownloadUrl(key: string, expiresIn?: number): Effect.Effect<string>
+      putObject(key: string, body: Uint8Array, contentType: string): Effect.Effect<void>
+      getObject(key: string): Effect.Effect<Uint8Array>
+      deleteObject(key: string): Effect.Effect<void>
+      listObjects(prefix?: string): Effect.Effect<readonly string[]>
+      getObjectMetadata(key: string): Effect.Effect<{
+        key: string
+        contentType: string | undefined
+        contentLength: number | undefined
+        lastModified: Date | undefined
+        etag: string | undefined
+      }>
+    }
+  >() {}
+
   const mockService = {
     generateUploadUrl: () => Effect.succeed('https://mock-upload-url.com'),
     generateDownloadUrl: () => Effect.succeed('https://mock-download-url.com'),
@@ -86,8 +87,6 @@ describe('storageActivities', () => {
   })
 
   it('deleteStorageObjects deletes objects and reports results', async () => {
-    const { storageActivities } = await import('./activities.js')
-
     const result = await storageActivities.deleteStorageObjects([
       'test/file1.png',
       'test/file2.png'
@@ -98,16 +97,12 @@ describe('storageActivities', () => {
   })
 
   it('listStorageObjects returns keys for prefix', async () => {
-    const { storageActivities } = await import('./activities.js')
-
     const keys = await storageActivities.listStorageObjects('test/')
 
     expect(keys).toEqual(['test/file1.png', 'test/file2.png'])
   })
 
   it('listStorageObjects returns empty for unknown prefix', async () => {
-    const { storageActivities } = await import('./activities.js')
-
     const keys = await storageActivities.listStorageObjects('unknown/')
 
     expect(keys).toEqual([])

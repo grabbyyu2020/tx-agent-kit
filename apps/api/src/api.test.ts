@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mapCoreError } from './api.js'
 
 afterEach(() => {
   vi.resetModules()
@@ -9,20 +10,18 @@ afterEach(() => {
 const importApi = async () => import('./api.js')
 
 describe('api error mapping', () => {
-  it('maps core unauthorized to api unauthorized', async () => {
-    const { mapCoreError } = await importApi()
+  it('maps core unauthorized to api unauthorized', () => {
     const error = mapCoreError({ _tag: 'CoreError', code: 'UNAUTHORIZED', message: 'nope' })
     expect(error._tag).toBe('Unauthorized')
   })
 
-  it('reclassified infra failures (internalError) map to 500, never a silent 4xx', async () => {
+  it('reclassified infra failures (internalError) map to 500, never a silent 4xx', () => {
     // Observability regression guard (backport upstream e5d148b90/f18172c41):
     // transient repository/port failures are now classified as internalError
     // (INTERNAL_ERROR / 500) by the service layer instead of a silent
     // badRequest (400). At the API boundary they MUST map to InternalError so
     // they are logged at error level and surfaced as the 500 they are — never
     // swallowed as a client error.
-    const { mapCoreError } = await importApi()
     const mapped = mapCoreError({
       _tag: 'CoreError',
       code: 'INTERNAL_ERROR',
@@ -81,8 +80,8 @@ describe('api error mapping', () => {
     authFailure.name = 'AuthError'
     authFailure.cause = jwtExpired
 
-    const { mapCoreError } = await importApi()
-    const mapped = mapCoreError({
+    const api = await importApi()
+    const mapped = api.mapCoreError({
       _tag: 'CoreError',
       code: 'UNAUTHORIZED',
       message: 'Unauthorized',
@@ -130,8 +129,8 @@ describe('api error mapping', () => {
       initializeApiSentry: vi.fn()
     }))
 
-    const { mapCoreError } = await importApi()
-    const mapped = mapCoreError({
+    const api = await importApi()
+    const mapped = api.mapCoreError({
       _tag: 'CoreError',
       code: 'UNAUTHORIZED',
       message: 'Unauthorized',

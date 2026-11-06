@@ -80,7 +80,7 @@ const derivePorts = (worktreeName: string): DerivedPorts => {
 }
 
 const runPortsLibCommand = (script: string): string =>
-  execFileSync('bash', ['-lc', script], {
+  execFileSync('bash', ['-c', script], {
     cwd: repoRoot,
     stdio: 'pipe',
     encoding: 'utf8'
