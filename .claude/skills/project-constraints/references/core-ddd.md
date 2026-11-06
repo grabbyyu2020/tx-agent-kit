@@ -43,3 +43,4 @@ Events are public nouns. Ports are public verbs. Errors are private semantics.
 | CORE-19 | Permissions are defined in `packages/contracts/src/permissions.ts`, with actions in `literals.ts`. After a change run `pnpm permissions:sync` to regenerate the reconcile SQL. | `script:scripts/permissions-sync.mjs` |
 | CORE-20 | Contracts are `effect/Schema` definitions in `packages/contracts`; shared constants in `constants.ts`, shared literal tuples in `literals.ts`. | `eslint:no-restricted-imports` [partial: bans other validation libraries] |
 | CORE-21 | Export new public services, ports, and events from `packages/core/src/index.ts`. | none |
+| CORE-22 | Feature path for a new entity: `pnpm scaffold:crud --domain <d> --entity <e> --dry-run`, then contracts (`effect/Schema`), core domain, persistence (schema, effect-schema, factory, migration), API routes plus `pnpm openapi:generate`, then `pnpm api:client:generate`, then the quality gates in `AGENTS.md`. | none |

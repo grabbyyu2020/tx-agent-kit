@@ -70,7 +70,7 @@ Create worktrees only with the helper; it sets up `.env`, ports, the Temporal ta
 cd .worktrees/my-feature
 ```
 
-Never use `git worktree add`, `EnterWorktree`, or the Agent tool's `isolation: "worktree"`. Infra is shared across worktrees; each worktree's integration API binds to `4100 + WORKTREE_PORT_OFFSET` with its own schema, so gates can run in parallel.
+Never use `git worktree add`, `EnterWorktree`, or the Agent tool's `isolation: "worktree"`. Name branches `<type>/<domain>-<short-description>` (`feat`, `fix`, `refactor`, `test`, `chore`), one task per worktree. Infra is shared across worktrees; each worktree's integration API binds to `4100 + WORKTREE_PORT_OFFSET` with its own schema, so gates can run in parallel.
 
 ## Quality gates
 

@@ -10,10 +10,10 @@ This skill is the single source of truth for how code in this repository must be
 ## How to use it
 
 1. List the paths you expect to touch.
-2. Find each path's area in the table below and read that reference in full. Always read `global.md` and `workflow.md`.
+2. Find each path's area in the table below and read that reference in full. Always read `global.md`.
 3. Write `Constraints: <IDs>` into your todo list, naming every rule that applies to the change.
 4. When you delegate, put the same `Constraints:` line and the absolute paths of the reference files into the brief, and tell the delegate to read them before its first edit.
-5. Before you report done, run the gates in `workflow.md` (FLOW-04) and check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
+5. Before you report done, run the quality gates in `AGENTS.md` and check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
 
 If a rule blocks a sensible change, stop and ask the user. Do not work around a rule, weaken a lint, or add a suppression.
 
@@ -22,7 +22,6 @@ If a rule blocks a sensible change, stop and ask the user. Do not work around a 
 | Paths | Reference | Main enforcement |
 |---|---|---|
 | everything | [references/global.md](references/global.md) | ESLint, `scripts/lint/enforce-source-type-safety.mjs`, `scripts/lint/invariants/source-hygiene.mjs` |
-| everything | [references/workflow.md](references/workflow.md) | none; these are working rules |
 | `apps/web/**` | [references/web.md](references/web.md) | `scripts/lint/enforce-web-client-contracts.mjs`, ESLint |
 | `apps/api/**` | [references/api.md](references/api.md) | ESLint `domain-structure/*`, `scripts/lint/enforce-route-kind-contracts.mjs` |
 | `packages/core/**`, `packages/contracts/**` | [references/core-ddd.md](references/core-ddd.md) | ESLint `domain-structure/*`, `scripts/lint/invariants/domain-structure.mjs` |
@@ -50,8 +49,7 @@ These are the rules agents break most often. The full list is in the references.
 - Domain events go through the transactional outbox. `apps/api` never talks to Temporal (EVT-01, API-01).
 - Temporal workflows are deterministic (WRK-01).
 - `usage_records` and `credit_ledger` are financial audit trails. Never update, delete, or prune them (DB-12).
-- Create worktrees only with `./scripts/worktree/create.sh` (FLOW-01).
-- Never bypass the gates: no `--no-verify`, no raised `INTEGRATION_TIMEOUT_SECONDS` (FLOW-06, TEST-11).
+- Never bypass the gates: no `--no-verify`, no raised `INTEGRATION_TIMEOUT_SECONDS` (GLB-25, TEST-11).
 
 ## Reading the tables
 
