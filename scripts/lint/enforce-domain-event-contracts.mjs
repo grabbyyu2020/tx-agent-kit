@@ -411,45 +411,27 @@ for (const eventType of domainEventTypes) {
 }
 
 // ─── Rule 7: Idempotent Workflow ID Enforcement ─────────────────────
-// Uses brace-balanced extraction to handle nested objects in startChild/executeChild options.
-const extractCallBlocks = (source) => {
-  const blocks = []
-  const callRe = /(?:startChild|executeChild)\s*\(/g
-  let m
-  while ((m = callRe.exec(source)) !== null) {
-    let depth = 1
-    let i = m.index + m[0].length
-    while (i < source.length && depth > 0) {
-      if (source[i] === '(') depth++
-      else if (source[i] === ')') depth--
-      i++
-    }
-    blocks.push(source.slice(m.index, i))
+// `resolve-dispatch.ts` derives every workflowId from the event, and the
+// outbox dispatcher starts it with REJECT_DUPLICATE, so a redelivered event
+// cannot start a second workflow.
+const resolveDispatchPath = resolve(repoRoot, 'apps/worker/src/dispatch/resolve-dispatch.ts')
+if (existsSync(resolveDispatchPath)) {
+  const workflowIds = [...readUtf8(resolveDispatchPath).matchAll(/workflowId:\s*([`'"][^\n]*?[`'"]),?$/gm)].map((m) => m[1].trim())
+  if (workflowIds.length === 0) {
+    fail('No `workflowId` found in `apps/worker/src/dispatch/resolve-dispatch.ts`. Each dispatch plan needs a workflowId that includes `event.id`.')
   }
-  return blocks
+  for (const idValue of workflowIds) {
+    if (!idValue.includes('${event.id}')) {
+      fail(
+        `Dispatch plan in \`apps/worker/src/dispatch/resolve-dispatch.ts\` has workflowId ${idValue} that does not include \`\${event.id}\`. Include the event ID for idempotent dispatch.`
+      )
+    }
+  }
 }
 
-const workflowsPath = resolve(repoRoot, 'apps/worker/src/workflows.ts')
-if (existsSync(workflowsPath)) {
-  const workflowsSource = readUtf8(workflowsPath)
-  const startChildBlocks = extractCallBlocks(workflowsSource)
-
-  for (const block of startChildBlocks) {
-    const workflowIdMatch = block.match(/workflowId:\s*[`']([^`']*)[`']/)
-    if (!workflowIdMatch) {
-      fail(
-        `\`startChild\`/\`executeChild\` call in \`apps/worker/src/workflows.ts\` is missing a \`workflowId\` property. Include a workflowId with \`event.id\` for idempotent dispatch.`
-      )
-      continue
-    }
-
-    const idValue = workflowIdMatch[1]
-    if (!idValue.includes('event.id') && !idValue.includes('${event.id}')) {
-      fail(
-        `\`startChild\` call in \`apps/worker/src/workflows.ts\` has workflowId '${idValue}' that does not include \`event.id\`. Include the event ID for idempotent dispatch.`
-      )
-    }
-  }
+const outboxDispatcherPath = resolve(repoRoot, 'apps/worker/src/dispatch/outbox-dispatcher.ts')
+if (existsSync(outboxDispatcherPath) && !/workflowIdReusePolicy:\s*'REJECT_DUPLICATE'/.test(readUtf8(outboxDispatcherPath))) {
+  fail("`apps/worker/src/dispatch/outbox-dispatcher.ts` must start workflows with `workflowIdReusePolicy: 'REJECT_DUPLICATE'`.")
 }
 
 // ─── Rule 8: Ban `as` casts on event payloads in worker ─────────────
