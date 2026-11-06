@@ -151,7 +151,7 @@ Staging/production app containers (`api`, `worker`) are deployed via `docker-com
 - Use `pnpm test:integration --skip-pgtap` for faster local loops; keep pgTAP enabled in CI.
 - `pnpm db:test:reset` can be run manually before local integration/dev sessions.
 
-## MCP Servers (Codex + Claude Code)
+## MCP Servers (Claude Code)
 - Project MCP config lives in `.mcp.json`.
 - MCP wrappers live in `scripts/mcp/`.
 - Configure endpoints in `.env` (`SUPABASE_ACCESS_TOKEN` is required for Supabase MCP).
@@ -161,17 +161,13 @@ pnpm mcp:prometheus
 pnpm mcp:jaeger
 pnpm mcp:context7
 pnpm mcp:supabase
-pnpm mcp:codex-config
 ```
 
-Use `pnpm mcp:codex-config` to print TOML blocks for `~/.codex/config.toml` that reference the same project wrappers.
-
 ## Docs
-- Agent map and guardrails: `AGENTS.md`
-- Claude operating guide: `CLAUDE.md`
+- Agent map and AI workflow: `AGENTS.md` (`CLAUDE.md` imports it)
+- Coding constraints: `.claude/skills/project-constraints/`
 - Architecture: `docs/ARCHITECTURE.md`
 - Commands: `docs/COMMANDS.md`
-- Quality and boundaries: `docs/QUALITY.md`
 - Runbooks: `docs/RUNBOOKS.md`
 - Deployment: `docs/DEPLOYMENT.md`
 - Rollback: `docs/ROLLBACK.md`

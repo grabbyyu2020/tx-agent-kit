@@ -32,7 +32,6 @@ const CORE_DOMAINS = resolve(REPO_ROOT, 'packages/core/src/domains')
 const API_ROUTES = resolve(REPO_ROOT, 'apps/api/src/routes')
 const API_TESTS = resolve(REPO_ROOT, 'apps/api/src')
 const WEB_TESTS = resolve(REPO_ROOT, 'apps/web')
-const SPECS_DIR = resolve(REPO_ROOT, 'specs/design')
 
 // ── Allow list: methods exempt from integration test requirement ────
 //
@@ -110,7 +109,6 @@ interface ServiceInfo {
   file: string
   methods: MethodInfo[]
   crudCompleteness: CrudCompleteness | null
-  relatedSpec: string | null
   hasIntegrationTest: boolean
   testFiles: string[]
   untestedMethods: string[]
@@ -341,9 +339,6 @@ function extractServicesFromFile(project: Project, filePath: string): ServiceInf
       }
     }
 
-    // Find related spec
-    const relatedSpec = findRelatedSpec(domain)
-
     services.push({
       className,
       tagString,
@@ -353,7 +348,6 @@ function extractServicesFromFile(project: Project, filePath: string): ServiceInf
       file: relative(REPO_ROOT, filePath),
       methods,
       crudCompleteness: computeCrudCompleteness(methods),
-      relatedSpec,
       hasIntegrationTest: false,
       testFiles: [],
       untestedMethods: [],
@@ -377,20 +371,6 @@ function computeCrudCompleteness(methods: MethodInfo[]): CrudCompleteness | null
 
   const hasCrud = Object.values(crud).some(Boolean)
   return hasCrud ? crud : null
-}
-
-function findRelatedSpec(domain: string): string | null {
-  if (!existsSync(SPECS_DIR)) return null
-
-  const specs = readdirSync(SPECS_DIR).filter((f) => f.endsWith('-design.md'))
-  // Match domain to spec: "team" → "tenancy-model-design.md", "billing" → "billing-and-pricing-design.md"
-  const domainLower = domain.toLowerCase()
-  const match = specs.find((s) => {
-    const specName = s.replace('-design.md', '')
-    return specName.includes(domainLower) || domainLower.includes(specName.split('-')[0])
-  })
-
-  return match ? `specs/design/${match}` : null
 }
 
 // ── Hybrid test coverage analysis ───────────────────────────────────
@@ -831,10 +811,6 @@ function hasRouteFile(domain: string, endpoints: RouteEndpoint[]): boolean {
 // ── Agent prompt generation ──────────────────────────────────────────
 
 function generateTestPrompt(service: ServiceInfo): string {
-  const specContext = service.relatedSpec
-    ? `\n\nRELATED SPEC: Read \`${service.relatedSpec}\` for business context, invariants, and failure modes that should inform test scenarios.`
-    : ''
-
   const methodDetails = service.untestedMethods.map((name) => {
     const method = service.methods.find((m) => m.name === name)
     if (!method) return `- ${name}`
@@ -867,7 +843,7 @@ ${scenarios.map((s) => `      - ${s}`).join('\n')}`
 Domain: ${service.domain}
 File: ${service.file}
 ${service.testFiles.length > 0 ? `Existing tests: ${service.testFiles.join(', ')}` : 'No existing test file.'}
-${specContext}${allowListNote}${coveredSummary}
+${allowListNote}${coveredSummary}
 
 ### Untested Methods (${service.untestedMethods.length}):
 
@@ -875,7 +851,7 @@ ${methodDetails}
 
 ### Instructions for agent:
 1. Read the service implementation at \`${service.file}\` to understand the business logic
-2. ${service.relatedSpec ? `Read \`${service.relatedSpec}\` for invariants and edge cases` : 'Check for related design specs in specs/design/'}
+2. Load the \`project-constraints\` skill and read the references for the paths you will touch
 3. For each untested method, decide: write a test OR add to allow list with a reason
 4. Write integration tests that exercise real API + DB interactions
 5. Add \`// @covers ${service.className}.methodName\` annotations to each test for traceability
@@ -1094,7 +1070,6 @@ for (const s of onlyServices) {
   const testIcon = s.hasIntegrationTest ? '✓' : '✗'
   console.log(`  ${testIcon} ${s.className}${crud}`)
   console.log(`    Domain: ${s.domain} | File: ${s.file}`)
-  if (s.relatedSpec) console.log(`    Spec: ${s.relatedSpec}`)
 
   // Group methods by classification
   const byClass: Record<string, string[]> = {}

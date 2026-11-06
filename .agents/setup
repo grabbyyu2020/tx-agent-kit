@@ -11,8 +11,6 @@ cd "$repo_root"
 # Temporal CLI version installed in .github/workflows/integration-tests.yml.
 NODE_VERSION="22.23.4"
 TEMPORAL_CLI_VERSION="1.1.2"
-# tx task/spec CLI used by the repo skills (needs bun, preinstalled in orbs).
-TX_CLI_VERSION="0.20.1"
 # yt-dlp release used by the shadowing worker (YT_DLP_PATH defaults to `yt-dlp`).
 YT_DLP_VERSION="2026.10.26"
 
@@ -162,28 +160,6 @@ install_temporal_cli() {
   curl -sSf https://temporal.download/cli.sh | sh -s -- --version "$TEMPORAL_CLI_VERSION"
 }
 
-# Installs tx into its own prefix and pins the core package to the same
-# version, since tx-cli depends on "@jamesaphoenix/tx": "*".
-install_tx_cli() {
-  local prefix="$HOME/.local/share/tx-cli"
-  if [[ "$(tx --version 2>/dev/null)" == "tx v${TX_CLI_VERSION}" ]]; then
-    echo "tx ${TX_CLI_VERSION} already installed"
-    return
-  fi
-  rm -rf "$prefix"
-  mkdir -p "$prefix"
-  cat >"$prefix/package.json" <<EOF
-{
-  "private": true,
-  "dependencies": { "@jamesaphoenix/tx-cli": "${TX_CLI_VERSION}" },
-  "overrides": { "@jamesaphoenix/tx": "${TX_CLI_VERSION}" }
-}
-EOF
-  npm install --prefix "$prefix" --no-audit --no-fund --silent
-  ln -sf "$prefix/node_modules/.bin/tx" "$node_home/bin/tx"
-  tx --version
-}
-
 # The release zipapp runs on the orb's python3; ~/.local/bin is on the orb PATH.
 install_yt_dlp() {
   local bin="$HOME/.local/bin/yt-dlp"
@@ -208,7 +184,6 @@ export PATH="$node_home/bin:$temporal_bin:$PATH"
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 step "Enable pnpm via corepack" enable_pnpm
 step "Install Temporal CLI ${TEMPORAL_CLI_VERSION}" install_temporal_cli
-step "Install tx CLI ${TX_CLI_VERSION}" install_tx_cli
 step "Install yt-dlp ${YT_DLP_VERSION}" install_yt_dlp
 step "Install dependencies" pnpm install --frozen-lockfile
 step "Build workspace packages" pnpm exec turbo run build --filter='./packages/**'

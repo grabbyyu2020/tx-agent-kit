@@ -139,7 +139,7 @@ When you discover a convention that is being violated, the process for adding en
 2. **Write the check.** Add an ESLint rule, a structural invariant function, or a shell check.
 3. **Verify it catches the violation.** Run the check against the current codebase.
 4. **Fix any existing violations.** The codebase must be green before the check can be enabled.
-5. **Document the constraint in `CLAUDE.md`.** Agents need to know the "why" behind the rule.
+5. **Document the constraint in the `project-constraints` skill.** Add a row to the matching `references/*.md` table, naming the rule that enforces it. Agents need to know the "why" behind the rule.
 
 This process ensures that every new constraint is immediately actionable. There is no gap between "we decided this" and "this is enforced."
 
