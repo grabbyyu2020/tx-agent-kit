@@ -4,6 +4,7 @@ import ts from 'typescript'
 
 import {
   parseTypeScriptSourceFile,
+  listDbSchemaFiles,
   readUtf8,
   repoRoot,
   toPosix,
@@ -12,7 +13,7 @@ import {
 } from './utils.mjs'
 
 /**
- * Parse schema.ts and return Map<sqlTableName, Set<sqlColumnName>>.
+ * Parse a schema file (schema.ts or a module in schema/) and return Map<sqlTableName, Set<sqlColumnName>>.
  * The SQL table name comes from the first argument to pgTable('table_name', { ... }).
  * The SQL column names come from the column builder call first argument: e.g. uuid('id'), text('name').
  */
@@ -184,11 +185,12 @@ const parseMigrationTablesAndColumns = (migrationsDir) => {
 }
 
 /**
- * Enforce that every table and column in schema.ts is covered by at least one migration.
+ * Enforce that every table and column in schema.ts (and the schema/ modules it
+ * re-exports) is covered by at least one migration.
  */
 export const enforceMigrationCoversSchema = (errors) => {
-  const schemaPath = resolve(repoRoot, 'packages/infra/db/src/schema.ts')
-  if (!existsSync(schemaPath)) {
+  const schemaPaths = listDbSchemaFiles()
+  if (schemaPaths.length === 0) {
     return
   }
 
@@ -197,26 +199,28 @@ export const enforceMigrationCoversSchema = (errors) => {
     return
   }
 
-  const schemaTablesAndCols = parseSchemaTablesAndColumns(schemaPath)
   const migrationTablesAndCols = parseMigrationTablesAndColumns(migrationsDir)
 
-  const schemaRelPath = 'packages/infra/db/src/schema.ts'
+  for (const schemaPath of schemaPaths) {
+    const schemaTablesAndCols = parseSchemaTablesAndColumns(schemaPath)
+    const schemaRelPath = toPosix(relative(repoRoot, schemaPath))
 
-  for (const [tableName, schemaCols] of schemaTablesAndCols) {
-    const migrationCols = migrationTablesAndCols.get(tableName)
-    if (!migrationCols) {
-      errors.push(
-        `Table \`${tableName}\` in \`${schemaRelPath}\` has no corresponding CREATE TABLE in any migration file.`
-      )
-      continue
-    }
-
-    for (const col of schemaCols) {
-      if (!migrationCols.has(col)) {
+    for (const [tableName, schemaCols] of schemaTablesAndCols) {
+      const migrationCols = migrationTablesAndCols.get(tableName)
+      if (!migrationCols) {
         errors.push(
-          `Column \`${tableName}.${col}\` in \`${schemaRelPath}\` is not covered by any migration ` +
-          `(CREATE TABLE or ALTER TABLE ADD COLUMN).`
+          `Table \`${tableName}\` in \`${schemaRelPath}\` has no corresponding CREATE TABLE in any migration file.`
         )
+        continue
+      }
+
+      for (const col of schemaCols) {
+        if (!migrationCols.has(col)) {
+          errors.push(
+            `Column \`${tableName}.${col}\` in \`${schemaRelPath}\` is not covered by any migration ` +
+            `(CREATE TABLE or ALTER TABLE ADD COLUMN).`
+          )
+        }
       }
     }
   }

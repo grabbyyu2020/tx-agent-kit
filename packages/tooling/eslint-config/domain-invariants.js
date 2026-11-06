@@ -387,7 +387,7 @@ export const domainInvariantConfig = [
     }
   },
   {
-    files: ['packages/infra/db/src/schema.ts'],
+    files: ['packages/infra/db/src/schema.ts', 'packages/infra/db/src/schema/**/*.ts'],
     plugins: {
       'domain-structure': domainStructurePlugin
     },

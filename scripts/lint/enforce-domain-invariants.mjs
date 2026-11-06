@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
 import process from 'node:process'
 
 import { runAllInvariants } from './invariants/index.mjs'
-import { readUtf8, repoRoot } from './invariants/utils.mjs'
+import { listDbSchemaFiles, readUtf8 } from './invariants/utils.mjs'
 
 const errors = runAllInvariants()
 
@@ -14,12 +12,13 @@ const errors = runAllInvariants()
 // If someone changes the schema to CASCADE, this catches it. Financial audit
 // tables must preserve 7-year tax compliance records even if an org is deleted.
 const enforceFinancialAuditFkSetNull = (errorList) => {
-  const schemaPath = resolve(repoRoot, 'packages/infra/db/src/schema.ts')
-  if (!existsSync(schemaPath)) {
+  // schema.ts re-exports per-aggregate modules from schema/; scan all of them.
+  const schemaPaths = listDbSchemaFiles()
+  if (schemaPaths.length === 0) {
     return
   }
 
-  const source = readUtf8(schemaPath)
+  const source = schemaPaths.map((schemaPath) => readUtf8(schemaPath)).join('\n')
   const financialTables = ['creditLedger', 'usageRecords']
 
   for (const tableName of financialTables) {

@@ -3,6 +3,7 @@ import { relative, resolve } from 'node:path'
 import ts from 'typescript'
 
 import {
+  listDbSchemaFiles,
   listFilesRecursively,
   parseTypeScriptSourceFile,
   readUtf8,
@@ -19,7 +20,8 @@ import {
 const AUTO_EXCLUDED_COLUMNS = new Set(['id', 'createdAt', 'updatedAt'])
 
 /**
- * Parse schema.ts and return a Map<tableName, Set<requiredNoDefaultColumns>>.
+ * Parse a schema file (schema.ts or a module in schema/) and return a
+ * Map<tableName, Set<requiredNoDefaultColumns>>.
  *
  * A column is "required with no default" when its chain includes `.notNull()` and
  * does NOT include `.default(`, `.defaultRandom(`, or `.defaultNow(`.
@@ -224,8 +226,8 @@ const ADAPTER_GENERATED_COLUMNS = new Set(['token'])
  * - Only check the `create` method (not createWithEvent etc.)
  */
 export const enforcePortCreateMatchesSchema = (errors) => {
-  const schemaPath = resolve(repoRoot, 'packages/infra/db/src/schema.ts')
-  if (!existsSync(schemaPath)) {
+  const schemaPaths = listDbSchemaFiles()
+  if (schemaPaths.length === 0) {
     return
   }
 
@@ -234,7 +236,14 @@ export const enforcePortCreateMatchesSchema = (errors) => {
     return
   }
 
-  const tableRequiredCols = parseRequiredNoDefaultColumns(schemaPath)
+  const tableRequiredCols = new Map()
+  const tableSchemaRelPaths = new Map()
+  for (const schemaPath of schemaPaths) {
+    for (const [tableName, requiredCols] of parseRequiredNoDefaultColumns(schemaPath)) {
+      tableRequiredCols.set(tableName, requiredCols)
+      tableSchemaRelPaths.set(tableName, toPosix(relative(repoRoot, schemaPath)))
+    }
+  }
   if (tableRequiredCols.size === 0) {
     return
   }
@@ -273,7 +282,7 @@ export const enforcePortCreateMatchesSchema = (errors) => {
     }
 
     const portRelPath = toPosix(relative(repoRoot, portMatch.file))
-    const schemaRelPath = 'packages/infra/db/src/schema.ts'
+    const schemaRelPath = tableSchemaRelPaths.get(tableName)
 
     for (const requiredCol of requiredCols) {
       if (ADAPTER_GENERATED_COLUMNS.has(requiredCol)) {

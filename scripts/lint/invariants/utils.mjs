@@ -31,6 +31,22 @@ export const listFilesRecursively = (rootDir) => {
   return files
 }
 
+// The Drizzle schema entry point is `packages/infra/db/src/schema.ts`; it defines some
+// tables itself and re-exports the per-aggregate modules in `packages/infra/db/src/schema/`.
+// Checks that parse the schema source must read all of these files.
+export const listDbSchemaFiles = (root = repoRoot) => {
+  const schemaPath = resolve(root, 'packages/infra/db/src/schema.ts')
+  if (!existsSync(schemaPath)) {
+    return []
+  }
+
+  const moduleFiles = listFilesRecursively(resolve(root, 'packages/infra/db/src/schema'))
+    .filter((filePath) => filePath.endsWith('.ts') && !filePath.endsWith('.test.ts'))
+    .sort()
+
+  return [schemaPath, ...moduleFiles]
+}
+
 export const extractTableConstants = (schemaSource) => {
   const names = new Set()
   const regex = /export const (\w+)\s*=\s*pgTable\(/g
