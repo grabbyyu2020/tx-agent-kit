@@ -33,4 +33,4 @@ This repository keeps every coding constraint in the `project-constraints` skill
 
 ## Run the quality gates before the PR
 
-- **Before** "Run `/deslop` over the diff before commit and `/no-comments` before review." run `pnpm lint:quiet`, `pnpm type-check:quiet`, `pnpm test:quiet`, and `pnpm test:integration:quiet` in the worktree you will ship (OPS-08), and check the diff against every rule on the `Constraints:` line (project-constraints step 5). Fix each failure before you open the PR.
+- **After** "Run `/deslop` over the diff before commit and `/no-comments` before review." run `pnpm lint:quiet`, `pnpm type-check:quiet`, `pnpm test:quiet`, and `pnpm test:integration:quiet` in the worktree you will ship (OPS-08), and check the diff against every rule on the `Constraints:` line (project-constraints step 5). Run them after both passes, because `/no-comments` can delete comments a tool reads, such as `@vitest-environment` or `ALLOW_HARDCODED_TEST_EMAIL`, and the gates are what catch it. Restore a deleted directive the gates need, and fix every other failure before you open the PR.
