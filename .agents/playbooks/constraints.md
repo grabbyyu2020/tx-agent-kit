@@ -27,10 +27,6 @@ This repository keeps every coding constraint in the `project-constraints` skill
 - **In** "If the target crosses a function boundary, run the **architect** skill for parallel design exploration of the shape before the move." every runner brief names the `Constraints:` IDs and reference paths, and a sketch that breaks one of those rules loses.
 - **In** "If the design is contested, `interrogate` before shipping." every adversary brief names the `Constraints:` IDs and reference paths, so a broken rule counts as a finding.
 
-## Land a bug's failing test first
-
-- **Replace** "Skip it when the test would be expensive, integration-heavy, or unclear." with "Skip it only when neither the API harness (TEST-07) nor the web harness (TEST-08) reaches the behavior, and then commit a failing repro script before the fix (TEST-01)."
-
 ## Run the quality gates before the PR
 
 - **After** "Run `/deslop` over the diff before commit and `/no-comments` before review." run `pnpm lint:quiet`, `pnpm type-check:quiet`, `pnpm test:quiet`, and `pnpm test:integration:quiet` in the worktree you will ship (OPS-08), and check the diff against every rule on the `Constraints:` line (project-constraints step 5). Run them after both passes, because `/no-comments` can delete comments a tool reads, such as `@vitest-environment` or `ALLOW_HARDCODED_TEST_EMAIL`, and the gates are what catch it. Restore a deleted directive the gates need, and fix every other failure before you open the PR.
