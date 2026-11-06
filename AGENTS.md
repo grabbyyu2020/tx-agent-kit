@@ -6,7 +6,7 @@ Humans steer intent and acceptance criteria. Agents implement, validate, and ite
 
 ## Before you change code
 
-**Load the `project-constraints` skill before writing or changing any code, config, migration, or test.** It holds every rule for this repository with the lint or script that enforces it, including the process rules (`OPS-*`) for dev servers, worktrees, gates, and CI. Read the references for the paths you will touch, write `Constraints: <IDs>` into your todo list, and put the same line plus the reference paths into every subagent brief. Subagents load this file too, so the same rule binds them.
+**Load the `project-constraints` skill before writing or changing any code, config, migration, or test.** It holds every rule for this repository with the lint or script that enforces it, including the process rules (`OPS-*`) for instruction files, worktrees, branches, and slow test suites. Read the references for the paths you will touch, write `Constraints: <IDs>` into your todo list, and put the same line plus the reference paths into every subagent brief. Subagents load this file too, so the same rule binds them.
 
 ## AI workflow (pstack)
 
@@ -14,7 +14,9 @@ This repository uses [pstack](.skill-sources/README.md) as its only agent workfl
 
 - Invoke the `poteto-mode` skill and follow it when a task touches more than one file, changes a signature other files call, involves a design or architecture choice, or is a bug or performance issue whose cause is unknown. For a contained one-file change with an obvious test, a question, or a one-line edit, work directly and verify on the real artifact.
 - When the intent is already specific, enter that skill directly: `tdd`, `architect`, `how`, `why`, `arena`, `interrogate`.
-- `.agents/playbooks/constraints.md` extends pstack's Feature, Bug fix, Refactoring, Perf issue, Hillclimb, and Opening a PR playbooks with this repository's constraint loading, worktree helper, and quality gates. Apply it whenever poteto-mode picks one of those playbooks.
+- `.agents/playbooks/constraints.md` extends the pstack playbooks in its `extends` frontmatter with this repository's constraint loading and quality gates. Apply it whenever poteto-mode picks one of those playbooks.
+- Running a poteto-mode playbook is the request to commit on a feature branch and open its PR (Opening a PR). Never commit to `main` directly.
+- poteto-mode follows the `plugin-dev:skill-development` skill for agent-facing prose. Install it once with `claude plugin install plugin-dev@claude-plugins-official --scope project`.
 - pstack spawns delegates with `subagent_type: "poteto-agent"`. In Amp, which has no `Agent` tool or subagent types, run the delegate's brief with Amp's own subagent tool and point it at `.claude/skills/poteto-mode/SKILL.md`; skip steps that need a missing capability and say so.
 
 ## Repo map
@@ -61,14 +63,9 @@ pnpm infra:ensure # shared Docker infra: Postgres, Redis, OTEL, Jaeger, Spotligh
 
 ## Worktrees
 
-Rules: OPS-05, OPS-06; shared infra and ports: TEST-10, TEST-14.
+Rules: OPS-05, OPS-06; shared infra: TEST-10.
 
-```bash
-./scripts/worktree/create.sh feat/my-feature main
-cd .worktrees/my-feature
-```
-
-The helper sets up `.env`, ports, the Temporal task queue, and a database schema, so gates can run in parallel across worktrees.
+pstack creates worktrees with Claude Code (`isolation: "worktree"`, `EnterWorktree`). `.worktreeinclude` copies `.env` and `.artifacts/local-infra.env` into them. Run `pnpm install --frozen-lockfile` before the first gate. Worktrees share ports and the database with the primary checkout, so run dev servers and integration tests in one checkout at a time.
 
 ## Quality gates
 

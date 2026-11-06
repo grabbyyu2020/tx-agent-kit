@@ -1,6 +1,6 @@
 ---
-extends: feature, bug-fix, refactoring, perf-issue, hillclimb, opening-a-pr, autopilot-full, orchestrate, multi-phase-plan, worktree-cleanup
-when: Any task in this repository that writes or changes code, config, migrations, or tests, or that creates or prunes worktrees.
+extends: feature, bug-fix, refactoring, perf-issue, hillclimb, opening-a-pr
+when: Any task in this repository that writes or changes code, config, migrations, or tests.
 ---
 
 # Project constraints
@@ -22,18 +22,15 @@ This repository keeps every coding constraint in the `project-constraints` skill
 - **In** "Delegate the mechanical edits to a subagent using your configured refactoring model" the brief names the `Constraints:` IDs and reference paths, tells the delegate to read them before any edit, and lists `pnpm lint:quiet` and `pnpm type-check:quiet` in its success criteria.
 - **In** "Delegate implementation to a subagent using your configured perf-issue model" the brief names the `Constraints:` IDs and reference paths, tells the delegate to read them before any edit, and lists `pnpm lint:quiet` and `pnpm type-check:quiet` in its success criteria.
 - **In** "Hand the change to a subagent using your configured hillclimb model" the brief names the `Constraints:` IDs and reference paths, tells the delegate to read them before any edit, and lists `pnpm lint:quiet` and `pnpm type-check:quiet` in its success criteria.
+- **In** "`architect` for parallel design exploration." every runner brief names the `Constraints:` IDs and reference paths, and a sketch that breaks one of those rules loses.
+- **In** "If it crosses a function boundary, `architect` first." every runner brief names the `Constraints:` IDs and reference paths, and a sketch that breaks one of those rules loses.
+- **In** "If the target crosses a function boundary, run the **architect** skill for parallel design exploration of the shape before the move." every runner brief names the `Constraints:` IDs and reference paths, and a sketch that breaks one of those rules loses.
+- **In** "If the design is contested, `interrogate` before shipping." every adversary brief names the `Constraints:` IDs and reference paths, so a broken rule counts as a finding.
 
-## Write the failing test first
+## Land a bug's failing test first
 
 - **Replace** "Skip it when the test would be expensive, integration-heavy, or unclear." with "Skip it only when neither the API harness (TEST-07) nor the web harness (TEST-08) reaches the behavior, and then commit a failing repro script before the fix (TEST-01)."
 
-## Create and remove worktrees with the repository helpers
+## Run the quality gates before the PR
 
-- **In** "Give every file-writing delegate its own worktree" create it with `./scripts/worktree/create.sh <branch> <base>` from the repository root (OPS-05) and hand the delegate the resulting `.worktrees/<name>` path.
-- **In** "When the delegate builds on commits the default branch lacks" pass the base commit as the second argument to `./scripts/worktree/create.sh` instead of running `git worktree add` yourself.
-- **In** "fan them to parallel subagents, each in its own worktree" create each worktree with `./scripts/worktree/create.sh`.
-- **In** "Work from a git worktree off main." create the worktree with `./scripts/worktree/create.sh <branch> main`.
-- **In** "Each owner is a background subagent in its own worktree" create each owner's worktree with `./scripts/worktree/create.sh` and hand the owner its `.worktrees/<name>` path.
-- **In** "give each writer its own worktree or branch" create each writer's worktree with `./scripts/worktree/create.sh`.
-- **In** "Each live lane runs in its own worktree at the PR head." create each lane's worktree with `./scripts/worktree/create.sh <lane-branch> <pr-head>`.
-- **Replace** "Per path, `git worktree remove --force <path>`." with "Per worktree under `.worktrees/`, run `./scripts/worktree/manage.sh remove <name> --yes`, which stops its dev processes and drops its database schema (OPS-05)."
+- **Before** "Run `/deslop` over the diff before commit and `/no-comments` before review." run `pnpm lint:quiet`, `pnpm type-check:quiet`, `pnpm test:quiet`, and `pnpm test:integration:quiet` in the worktree you will ship (OPS-08), and check the diff against every rule on the `Constraints:` line (project-constraints step 5). Fix each failure before you open the PR.

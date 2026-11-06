@@ -22,7 +22,7 @@ If a rule blocks a sensible change, do not work around it, weaken a lint, or add
 | Paths | Reference | Main enforcement |
 |---|---|---|
 | everything | [references/global.md](references/global.md) | ESLint, `scripts/lint/enforce-source-type-safety.mjs`, `scripts/lint/invariants/source-hygiene.mjs` |
-| every task (instruction files, worktrees, branches, slow test suites) | [references/process.md](references/process.md) | `scripts/lint/enforce-agent-workflow.mjs`, `scripts/worktree/create.sh` |
+| every task (instruction files, worktrees, branches, slow test suites) | [references/process.md](references/process.md) | `scripts/lint/enforce-agent-workflow.mjs` |
 | `apps/web/**` | [references/web.md](references/web.md) | `scripts/lint/enforce-web-client-contracts.mjs`, ESLint |
 | `apps/api/**` | [references/api.md](references/api.md) | ESLint `domain-structure/*`, `scripts/lint/enforce-route-kind-contracts.mjs` |
 | `packages/core/**`, `packages/contracts/**` | [references/core-ddd.md](references/core-ddd.md) | ESLint `domain-structure/*`, `scripts/lint/invariants/domain-structure.mjs` |
@@ -51,7 +51,7 @@ These are the rules agents break most often. The full list is in the references.
 - Temporal workflows are deterministic (WRK-01).
 - `usage_records` and `credit_ledger` are financial audit trails. Never update, delete, or prune them (DB-12).
 - Never bypass the gates: no `--no-verify`, no raised `INTEGRATION_TIMEOUT_SECONDS` (GLB-25, TEST-11).
-- Create worktrees only with `scripts/worktree/create.sh` and remove them only with `scripts/worktree/manage.sh remove` (OPS-05).
+- Worktrees share ports and the database with the primary checkout. Run dev servers and integration tests in one checkout at a time (OPS-05).
 
 ## Reading the tables
 

@@ -12,7 +12,7 @@ paths:
 
 | ID | Rule | Enforced by |
 |---|---|---|
-| TEST-01 | TDD: write the failing test first, then the code. For React pages and components, write the `*.integration.test.tsx` before the component exists. The integration harnesses (TEST-07, TEST-08) count as a cheap local test path, so "integration-heavy" is not a reason to skip the `tdd` skill or Bug fix step 5. Skip the test only when neither harness reaches the behavior, and then commit a failing repro script before the fix. | none |
+| TEST-01 | A bug fix lands a failing regression test before the fix (Bug fix step 5, the `tdd` skill). The integration harnesses (TEST-07, TEST-08) count as a cheap local test path, so "integration-heavy" is not a reason to skip it. Skip the test only when neither harness reaches the behavior, and then commit a failing repro script before the fix. New features need not write tests first: they ship with tests per TEST-02 and are verified on the real surface (Feature step 5). | none |
 | TEST-02 | Prefer, in order: integration tests (real API + DB + components), property-based tests for rule-heavy domain logic, unit tests only where integration is impractical, and Playwright E2E only for critical multi-page journeys. | none |
 | TEST-03 | Tests are colocated as `<file>.test.ts(x)` or `<file>.integration.test.ts(x)` next to a source file. No `__tests__/` folders, `.spec.*`, or `.integration.ts(x)` names. | `script:scripts/lint/invariants/test-contracts.mjs` |
 | TEST-04 | Every test file imports from `vitest`. | `script:scripts/lint/invariants/test-contracts.mjs` |

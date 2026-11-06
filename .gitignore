@@ -47,3 +47,6 @@ worktrees
 
 # Amp orb portal metadata
 .amp/portals/*
+
+# pstack audit logs (poteto-mode)
+.audit/
