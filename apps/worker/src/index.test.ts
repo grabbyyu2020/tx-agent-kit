@@ -87,6 +87,15 @@ vi.mock('@tx-agent-kit/logging', () => ({
   })
 }))
 
+vi.mock('@tx-agent-kit/db', () => ({
+  setPoolErrorReporter: vi.fn()
+}))
+
+vi.mock('@tx-agent-kit/redis', () => ({
+  closeRedisClients: vi.fn(() => Promise.resolve(undefined)),
+  setRedisErrorReporter: vi.fn()
+}))
+
 vi.mock('@temporalio/worker', () => ({
   NativeConnection: {
     connect: nativeConnectionConnectMock
