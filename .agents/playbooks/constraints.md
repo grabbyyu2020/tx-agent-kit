@@ -25,14 +25,14 @@ This repository keeps every coding constraint in the `project-constraints` skill
 
 ## Create worktrees with the repository helper
 
-- **In** "Give every file-writing delegate its own worktree" create it with `./scripts/worktree/create.sh <branch> <base>` from the repository root and hand the delegate the resulting `.worktrees/<name>` path. Never use `isolation: "worktree"`, `EnterWorktree`, or a raw `git worktree add`. They skip `scripts/worktree/setup.sh`, so the worktree has no `.env`, ports, or database schema and cannot run integration tests.
+- **In** "Give every file-writing delegate its own worktree" create it with `./scripts/worktree/create.sh <branch> <base>` from the repository root (OPS-05) and hand the delegate the resulting `.worktrees/<name>` path.
 - **In** "When the delegate builds on commits the default branch lacks" pass the base commit as the second argument to `./scripts/worktree/create.sh` instead of running `git worktree add` yourself.
 - **In** "fan them to parallel subagents, each in its own worktree" create each worktree with `./scripts/worktree/create.sh`.
 - **In** "Work from a git worktree off main." create the worktree with `./scripts/worktree/create.sh <branch> main`.
 
 ## Run the repository quality gates when you verify
 
-- **After** "Verify on the matching surface." run `pnpm lint:quiet && pnpm type-check:quiet && pnpm test:quiet` with `set -o pipefail`. When the change touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, run `pnpm infra:ensure` and then `pnpm test:integration:quiet`. Check the diff against each rule in the `Constraints:` todo and name any you could not satisfy.
+- **After** "Verify on the matching surface." run `pnpm lint:quiet && pnpm type-check:quiet && pnpm test:quiet` (OPS-07). When the change touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, run `pnpm infra:ensure` and then `pnpm test:integration:quiet`. Check the diff against each rule in the `Constraints:` todo and name any you could not satisfy.
 - **After** "Verify on the same surface." run the same gates and the same constraint check.
 - **After** "Prove behavior is unchanged on the real artifact" run the same gates and the same constraint check.
 - **After** "Parse and compare the artifacts" run the same gates and the same constraint check.
@@ -40,4 +40,4 @@ This repository keeps every coding constraint in the `project-constraints` skill
 
 ## Check CI after the push
 
-- **After** "Post the URL and keep building." run `pnpm ci:check --watch` in the background for the pushed commit. Local integration runs cover only affected projects, so the work is not done until the full CI suite on the branch is green.
+- **After** "Post the URL and keep building." run `pnpm ci:check --watch` in the background for the pushed commit (OPS-09).
