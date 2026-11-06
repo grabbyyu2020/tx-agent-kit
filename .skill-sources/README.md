@@ -26,10 +26,13 @@ pstack 未采用 [cursor/plugins](https://github.com/cursor/plugins/tree/main/ps
 - 子代理 `pstack:poteto-agent` 等改为不带命名空间的名字，项目级子代理只注册裸名。
 - `<plugin>/skills/` 改为 `.claude/skills/`。
 - `poteto-agent` 不再去插件缓存里找 `poteto-mode/SKILL.md`，改读 `.claude/skills/poteto-mode/SKILL.md`。
+- “under/from the installed plugin” 的脚本与 playbook 路径改为 `.claude/skills/...`。
+- 各 Models 小节里“改 `plugins/pstack/models.json` 再跑 `tools/generate.mjs`”的说明改为“由 `pnpm pstack:sync` 从上游复制”。
+- 删掉 `how`、`why` 里 Cursor 专有的 `readonly` 子代理参数，Claude Code 的 `Agent` 工具不接受它。
 
-非 Claude Code 运行时的工具映射文件保持原样。替换表没覆盖到的 `pstack:` 写法会让脚本直接失败，需要先扩充替换表。插件自带的 SessionStart 路由钩子不安装，路由规则写在 `AGENTS.md`。
+非 Claude Code 运行时的工具映射文件保持原样。替换表没覆盖到的 `pstack:`、`installed plugin`、`readonly: true|false` 写法会让脚本直接失败，需要先扩充替换表。插件自带的 SessionStart 路由钩子不安装，路由规则写在 `AGENTS.md`。
 
-不要直接改 `.claude/skills/` 下的 pstack 文件。`pnpm lint` 会运行 `sync-pstack.mjs --check`，安装副本与快照不一致即报错。项目自有技能（`project-constraints`，以及 `/create-verification-skill` 生成的 `verify`）登记在脚本的 `projectSkills` 中，同步时不受影响。
+不要直接改 `.claude/skills/` 下的 pstack 文件。`pnpm lint` 会运行 `sync-pstack.mjs --check`，安装副本与快照不一致即报错。项目自有技能（`project-constraints`，以及 `/create-verification-skill` 生成的 `verify`）登记在脚本的 `projectSkills` 中，同步时不受影响。`--check` 跳过 `node_modules`，因为 `watch-pr`、`statechart` 的脚本会就地 `bun install`。
 
 ## 更新方法
 

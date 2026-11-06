@@ -9,7 +9,7 @@ Answer the user's question about pstack, hand them a prompt they can send, and l
 
 A message that asks for work, such as "use pstack to fix this bug", is not a help question. Read [`poteto-mode`](../poteto-mode/SKILL.md) and do the work under it.
 
-This file maps questions to the installed skills, playbooks, and platform mappings that own the answers. Read the matching source before answering. Its instructions take precedence over this map and any upstream guide, which describes Cursor and may differ from this port. The local links point into the installed plugin, so give the user the file's public copy: `https://github.com/michael-denyer/pstack-claude/blob/main/plugins/pstack/` followed by its path relative to the plugin root.
+This file maps questions to the installed skills, playbooks, and platform mappings that own the answers. Read the matching source before answering. Its instructions take precedence over this map and any upstream guide, which describes Cursor and may differ from this port. The local links point into `.claude/skills/`, so give the user the file's public copy: `https://github.com/michael-denyer/pstack-claude/blob/main/plugins/pstack/` followed by its path relative to the plugin root.
 
 ## Find out what they need
 

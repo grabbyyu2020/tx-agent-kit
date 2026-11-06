@@ -21,7 +21,7 @@ Invoke when the user says "reflect" or "/reflect". Skip when the conversation is
 
 Before fanning out, find this conversation's transcript in Claude Code's per-project transcripts directory at `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/<encoded-cwd>/`. Do not glob across `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/`. That crosses workspace boundaries and reads private chats from unrelated projects.
 
-Run the finder at `skills/reflect/scripts/find-transcript.mjs` under the installed plugin with the projects directory and a fragment of the conversation's opening user prompt. `claude-project-dir.mjs` beside it prints this session's projects directory, wherever the shell has moved since:
+Run the finder at `.claude/skills/reflect/scripts/find-transcript.mjs` with the projects directory and a fragment of the conversation's opening user prompt. `claude-project-dir.mjs` beside it prints this session's projects directory, wherever the shell has moved since:
 
 ```bash
 dir=$(node .claude/skills/reflect/scripts/claude-project-dir.mjs) && node .claude/skills/reflect/scripts/find-transcript.mjs "$dir" "<opening prompt fragment>"
@@ -79,7 +79,7 @@ Short list, no preamble:
 
 ## Models
 
-Role defaults, stamped from `plugins/pstack/models.json` (edit there, rerun `tools/generate.mjs`). A matching role line in the `pstack-models.md` override sheet overrides each at runtime; `/setup-pstack` writes it and lists its path per runtime.
+Role defaults, copied from upstream pstack by `pnpm pstack:sync`. A matching role line in the `pstack-models.md` override sheet overrides each at runtime; `/setup-pstack` writes it and lists its path per runtime.
 
 - reflect tooling: `opus`
 - reflect judgment, divergent, synthesizer: `opus`

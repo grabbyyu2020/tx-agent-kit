@@ -15,7 +15,7 @@ On Antigravity, read the [platform mapping](../poteto-mode/references/agy-tools.
 
 Explore the codebase to answer "how does X work?" questions. Produce architectural explanations at the level of a senior engineer onboarding onto a subsystem, enough to build a working mental model, not so much that it reads like annotated source code.
 
-Every spawn is a `Agent` subagent with `subagent_type: "general-purpose"` and `readonly: true`. Explorers use the `how explorer` line in `pstack-models.md` (default in [Models](#models)), and every explainer uses the `how explainer` line (default in [Models](#models)). Set `model` to that line's value, or to the default if the sheet or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the `Agent` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. Pick each subagent's reasoning level for the job, per the Subagents section of the **poteto-mode** skill.
+Every spawn is a `Agent` subagent with `subagent_type: "general-purpose"`, and its brief forbids writing files. Explorers use the `how explorer` line in `pstack-models.md` (default in [Models](#models)), and every explainer uses the `how explainer` line (default in [Models](#models)). Set `model` to that line's value, or to the default if the sheet or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the `Agent` tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. Pick each subagent's reasoning level for the job, per the Subagents section of the **poteto-mode** skill.
 
 ## 1. Assess complexity
 
@@ -44,7 +44,7 @@ The explanation uses the sections defined in `references/explainer-prompt.md`, d
 
 ## Models
 
-Role defaults, stamped from `plugins/pstack/models.json` (edit there, rerun `tools/generate.mjs`). A matching role line in the `pstack-models.md` override sheet overrides each at runtime; `/setup-pstack` writes it and lists its path per runtime.
+Role defaults, copied from upstream pstack by `pnpm pstack:sync`. A matching role line in the `pstack-models.md` override sheet overrides each at runtime; `/setup-pstack` writes it and lists its path per runtime.
 
 - how explorer: `opus`
 - how explainer: `opus`

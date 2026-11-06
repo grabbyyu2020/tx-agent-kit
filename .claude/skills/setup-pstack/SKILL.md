@@ -136,7 +136,7 @@ The role lines are the same everywhere. What differs is the sheet path, how the 
 
 ## Models
 
-Stamped from `plugins/pstack/models.json` (edit there, rerun `tools/generate.mjs`).
+Copied from upstream pstack by `pnpm pstack:sync`.
 
 - Available Claude models: `opus`, `fable`, `sonnet`, `haiku`
 - Default panel: `opus`, `fable`, `sonnet`, `haiku`

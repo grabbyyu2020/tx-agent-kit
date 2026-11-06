@@ -55,6 +55,37 @@ const rewrites = [
     to: '.claude/skills/'
   },
   {
+    name: 'plugin-relative paths',
+    from: /`((?:node )?)skills\/([^`]+)` (?:under|from) the installed plugin/gu,
+    to: '`$1.claude/skills/$2`'
+  },
+  {
+    name: 'plugin-relative directory',
+    from: /under the installed plugin's `skills\/([^`]+)` directory/gu,
+    to: 'in the `.claude/skills/$1` directory'
+  },
+  {
+    name: 'plugin root',
+    from: /\b(from|under|into) the installed plugin\b/gu,
+    to: '$1 `.claude/skills/`'
+  },
+  {
+    name: 'model defaults source',
+    from: /([Ss])tamped from `plugins\/pstack\/models\.json` \(edit there, rerun `tools\/generate\.mjs`\)/gu,
+    to: (_match, s) => `${s === 'S' ? 'C' : 'c'}opied from upstream pstack by \`pnpm pstack:sync\``
+  },
+  {
+    // The Agent tool has no `readonly` parameter (a Cursor Task option), and passing one fails the call.
+    name: 'how readonly spawn',
+    from: '`subagent_type: "general-purpose"` and `readonly: true`.',
+    to: '`subagent_type: "general-purpose"`, and its brief forbids writing files.'
+  },
+  {
+    name: 'why readonly spawn',
+    from: 'Every spawn is `general-purpose` with `readonly: false` (agent mode). **Do not use readonly/Ask mode.** It strips MCP access, which disables the MCP-backed investigators and the synthesizer\'s citation spot-checks. ',
+    to: 'Every spawn is `general-purpose`. '
+  },
+  {
     name: 'poteto-agent skill lookup',
     from: /With no path, before any other work, search `\$\{CLAUDE_CODE_PLUGIN_CACHE_DIR[^`]*`.*?If no such file exists, stop and tell your parent\./u,
     to: 'With no path, read `.claude/skills/poteto-mode/SKILL.md` from the repository root before any other work. If that file does not exist, stop and tell your parent.'
@@ -69,7 +100,10 @@ const listFiles = (root) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name)
       if (entry.isDirectory()) {
-        walk(path)
+        // The watch-pr and statechart scripts `bun install` their dependencies in place.
+        if (entry.name !== 'node_modules') {
+          walk(path)
+        }
       } else {
         files.push(toPosix(relative(root, path)))
       }
@@ -106,9 +140,9 @@ const build = (outRoot) => {
         text = next
       }
     }
-    const leftover = text.match(/pstack:[a-z]/u)
+    const leftover = text.match(/pstack:(?!sync\b)[a-z]|installed plugin|readonly: (?:true|false)/u)
     if (leftover) {
-      throw new Error(`${path}: unhandled plugin namespace "${leftover[0]}..."; extend the rewrite table`)
+      throw new Error(`${path}: unhandled plugin-only text "${leftover[0]}"; extend the rewrite table`)
     }
     writeFileSync(file, text)
   }
@@ -167,14 +201,13 @@ export const checkPstackInstall = () => {
 
 const install = () => {
   const claudeRoot = join(repoRoot, '.claude')
-  for (const name of pstackSkillNames()) {
-    rmSync(join(claudeRoot, 'skills', name), { recursive: true, force: true })
-  }
-  rmSync(join(claudeRoot, 'agents'), { recursive: true, force: true })
-
   const scratch = mkdtempSync(join(tmpdir(), 'pstack-sync-'))
   try {
     build(scratch)
+    for (const name of pstackSkillNames()) {
+      rmSync(join(claudeRoot, 'skills', name), { recursive: true, force: true })
+    }
+    rmSync(join(claudeRoot, 'agents'), { recursive: true, force: true })
     cpSync(scratch, claudeRoot, { recursive: true })
     for (const path of listFiles(scratch)) {
       chmodSync(join(claudeRoot, path), statSync(join(scratch, path)).mode)
