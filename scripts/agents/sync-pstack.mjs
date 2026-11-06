@@ -23,7 +23,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const sourceRoot = join(repoRoot, '.skill-sources/pstack')
 
 // Skills this repository owns. They live beside pstack in .claude/skills and are never synced.
-export const projectSkills = ['project-constraints']
+export const projectSkills = ['project-constraints', 'verify']
 
 const pstackAgents = [
   'poteto-agent',

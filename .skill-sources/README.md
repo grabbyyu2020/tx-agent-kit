@@ -29,7 +29,7 @@ pstack 未采用 [cursor/plugins](https://github.com/cursor/plugins/tree/main/ps
 
 非 Claude Code 运行时的工具映射文件保持原样。替换表没覆盖到的 `pstack:` 写法会让脚本直接失败，需要先扩充替换表。插件自带的 SessionStart 路由钩子不安装，路由规则写在 `AGENTS.md`。
 
-不要直接改 `.claude/skills/` 下的 pstack 文件。`pnpm lint` 会运行 `sync-pstack.mjs --check`，安装副本与快照不一致即报错。项目自有技能（`project-constraints`）登记在脚本的 `projectSkills` 中，同步时不受影响。
+不要直接改 `.claude/skills/` 下的 pstack 文件。`pnpm lint` 会运行 `sync-pstack.mjs --check`，安装副本与快照不一致即报错。项目自有技能（`project-constraints`，以及 `/create-verification-skill` 生成的 `verify`）登记在脚本的 `projectSkills` 中，同步时不受影响。
 
 ## 更新方法
 

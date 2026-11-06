@@ -1,6 +1,6 @@
 ---
-extends: feature, bug-fix, refactoring, perf-issue, hillclimb, opening-a-pr
-when: Any task in this repository that writes or changes code, config, migrations, or tests.
+extends: feature, bug-fix, refactoring, perf-issue, hillclimb, opening-a-pr, autopilot-full, orchestrate, multi-phase-plan, worktree-cleanup
+when: Any task in this repository that writes or changes code, config, migrations, or tests, or that creates or prunes worktrees.
 ---
 
 # Project constraints
@@ -23,21 +23,17 @@ This repository keeps every coding constraint in the `project-constraints` skill
 - **In** "Delegate implementation to a subagent using your configured perf-issue model" the brief names the `Constraints:` IDs and reference paths, tells the delegate to read them before any edit, and lists `pnpm lint:quiet` and `pnpm type-check:quiet` in its success criteria.
 - **In** "Hand the change to a subagent using your configured hillclimb model" the brief names the `Constraints:` IDs and reference paths, tells the delegate to read them before any edit, and lists `pnpm lint:quiet` and `pnpm type-check:quiet` in its success criteria.
 
-## Create worktrees with the repository helper
+## Write the failing test first
+
+- **Replace** "Skip it when the test would be expensive, integration-heavy, or unclear." with "Skip it only when neither the API harness (TEST-07) nor the web harness (TEST-08) reaches the behavior, and then commit a failing repro script before the fix (TEST-01)."
+
+## Create and remove worktrees with the repository helpers
 
 - **In** "Give every file-writing delegate its own worktree" create it with `./scripts/worktree/create.sh <branch> <base>` from the repository root (OPS-05) and hand the delegate the resulting `.worktrees/<name>` path.
 - **In** "When the delegate builds on commits the default branch lacks" pass the base commit as the second argument to `./scripts/worktree/create.sh` instead of running `git worktree add` yourself.
 - **In** "fan them to parallel subagents, each in its own worktree" create each worktree with `./scripts/worktree/create.sh`.
 - **In** "Work from a git worktree off main." create the worktree with `./scripts/worktree/create.sh <branch> main`.
-
-## Run the repository quality gates when you verify
-
-- **After** "Verify on the matching surface." run `pnpm lint:quiet && pnpm type-check:quiet && pnpm test:quiet` (OPS-10). When the change touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, run `pnpm infra:ensure` and then `pnpm test:integration:quiet`. Check the diff against each rule in the `Constraints:` todo and name any you could not satisfy.
-- **After** "Verify on the same surface." run the same gates and the same constraint check.
-- **After** "Prove behavior is unchanged on the real artifact" run the same gates and the same constraint check.
-- **After** "Parse and compare the artifacts" run the same gates and the same constraint check.
-- **In** "Measure before and after with the frozen harness, and run the regression gate." the regression gate includes `pnpm lint:quiet` and `pnpm type-check:quiet`.
-
-## Check CI after the push
-
-- **After** "Post the URL and keep building." run `pnpm ci:check --watch` in the background for the pushed commit (OPS-09).
+- **In** "Each owner is a background subagent in its own worktree" create each owner's worktree with `./scripts/worktree/create.sh` and hand the owner its `.worktrees/<name>` path.
+- **In** "give each writer its own worktree or branch" create each writer's worktree with `./scripts/worktree/create.sh`.
+- **In** "Each live lane runs in its own worktree at the PR head." create each lane's worktree with `./scripts/worktree/create.sh <lane-branch> <pr-head>`.
+- **Replace** "Per path, `git worktree remove --force <path>`." with "Per worktree under `.worktrees/`, run `./scripts/worktree/manage.sh remove <name> --yes`, which stops its dev processes and drops its database schema (OPS-05)."

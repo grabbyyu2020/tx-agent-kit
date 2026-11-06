@@ -13,16 +13,16 @@ This skill is the single source of truth for how code in this repository must be
 2. Find each path's area in the table below and read that reference in full. Always read `global.md` and `process.md`.
 3. Write `Constraints: <IDs>` into your todo list, naming every rule that applies to the change.
 4. When you delegate, put the same `Constraints:` line and the absolute paths of the reference files into the brief, and tell the delegate to read them before its first edit.
-5. Before you report done, run the quality gates (OPS-10) and check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
+5. Before you report done, check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
 
-If a rule blocks a sensible change, stop and ask the user. Do not work around a rule, weaken a lint, or add a suppression.
+If a rule blocks a sensible change, do not work around it, weaken a lint, or add a suppression. Changing a rule is the user's call, so ask. Under a full-autonomy grant, record `BLOCKED: <rule ID>` in the todo list, keep doing the work that does not depend on it, and report it at the end.
 
 ## Areas
 
 | Paths | Reference | Main enforcement |
 |---|---|---|
 | everything | [references/global.md](references/global.md) | ESLint, `scripts/lint/enforce-source-type-safety.mjs`, `scripts/lint/invariants/source-hygiene.mjs` |
-| every task (instruction files, dev servers, worktrees, gates, CI) | [references/process.md](references/process.md) | `scripts/lint/enforce-agent-workflow.mjs`, `scripts/worktree/create.sh` |
+| every task (instruction files, worktrees, branches, slow test suites) | [references/process.md](references/process.md) | `scripts/lint/enforce-agent-workflow.mjs`, `scripts/worktree/create.sh` |
 | `apps/web/**` | [references/web.md](references/web.md) | `scripts/lint/enforce-web-client-contracts.mjs`, ESLint |
 | `apps/api/**` | [references/api.md](references/api.md) | ESLint `domain-structure/*`, `scripts/lint/enforce-route-kind-contracts.mjs` |
 | `packages/core/**`, `packages/contracts/**` | [references/core-ddd.md](references/core-ddd.md) | ESLint `domain-structure/*`, `scripts/lint/invariants/domain-structure.mjs` |
@@ -51,7 +51,7 @@ These are the rules agents break most often. The full list is in the references.
 - Temporal workflows are deterministic (WRK-01).
 - `usage_records` and `credit_ledger` are financial audit trails. Never update, delete, or prune them (DB-12).
 - Never bypass the gates: no `--no-verify`, no raised `INTEGRATION_TIMEOUT_SECONDS` (GLB-25, TEST-11).
-- Create worktrees only with `scripts/worktree/create.sh`, and never start services with inline env vars (OPS-05, OPS-03).
+- Create worktrees only with `scripts/worktree/create.sh` and remove them only with `scripts/worktree/manage.sh remove` (OPS-05).
 
 ## Reading the tables
 
