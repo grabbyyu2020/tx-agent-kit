@@ -189,3 +189,11 @@ step "Install dependencies" pnpm install --frozen-lockfile
 step "Build workspace packages" pnpm exec turbo run build --filter='./packages/**'
 step "Initialize and migrate Postgres" init_database
 step "Configure local .env" pnpm env:configure
+
+# Orbs have no 1Password CLI, so source_env refuses the op:// references that
+# .env inherits from .env.example, and sourcing them literally fails the API's
+# env invariants. Blank them so each integration reads as unconfigured.
+blank_op_references() {
+  sed -i -E 's#^([A-Za-z_][A-Za-z0-9_]*)=op://.*#\1=#' .env
+}
+step "Blank 1Password references in .env" blank_op_references

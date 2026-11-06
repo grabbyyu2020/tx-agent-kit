@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Amp rewrites ~/.bash_profile on activation and after each wake, adding a
+# block that sources ~/.env, which sets PATH. When that block runs after the
+# toolchain block from .agents/setup, login shells lose the inherited PATH and
+# the apps' `bash -lc` dev scripts cannot find tsx or next. Move the toolchain
+# block back to the end of the profile.
+set -euo pipefail
+
+profile="$HOME/.bash_profile"
+start='# tx-agent-kit orb toolchain'
+end='# end tx-agent-kit orb toolchain'
+
+[[ -f "$profile" ]] && grep -qxF "$start" "$profile" || exit 0
+[[ "$(tail -n 1 "$profile")" == "$end" ]] && exit 0
+
+tmp="$(mktemp)"
+{
+  sed "/^${start}\$/,/^${end}\$/d" "$profile"
+  sed -n "/^${start}\$/,/^${end}\$/p" "$profile"
+} >"$tmp"
+cat "$tmp" >"$profile"
+rm -f "$tmp"
