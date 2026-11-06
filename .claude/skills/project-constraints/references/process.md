@@ -18,3 +18,4 @@ How to work in this repository: instruction files, dev servers, worktrees, gates
 | OPS-07 | When piping a gate through `grep`, `head`, or `tail`, use `set -o pipefail`. | none |
 | OPS-08 | Do not run `pnpm test:integration:full` or `pnpm test:integration:ci-only` locally unless asked. They include slow suites that CI runs. | none |
 | OPS-09 | After pushing, run `pnpm ci:check --watch` and fix failing jobs before calling the work done. Local integration runs cover only affected projects; CI runs the full suite. | none |
+| OPS-10 | Before calling a change done, run `pnpm lint:quiet`, `pnpm type-check:quiet`, and `pnpm test:quiet`. When it touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, also run `pnpm infra:ensure` and `pnpm test:integration:quiet`. | none |

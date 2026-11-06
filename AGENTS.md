@@ -51,7 +51,7 @@ This repository uses [pstack](.skill-sources/README.md) as its only agent workfl
 Rules: OPS-03, OPS-04.
 
 ```bash
-pnpm dev          # infra + Temporal + API (8080) + web (3000) + worker
+pnpm dev          # infra + Temporal + API (4000) + web (3000) + worker
 pnpm dev:api      # individual services, once infra is up
 pnpm dev:web
 pnpm dev:worker

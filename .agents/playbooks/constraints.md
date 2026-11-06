@@ -32,7 +32,7 @@ This repository keeps every coding constraint in the `project-constraints` skill
 
 ## Run the repository quality gates when you verify
 
-- **After** "Verify on the matching surface." run `pnpm lint:quiet && pnpm type-check:quiet && pnpm test:quiet` (OPS-07). When the change touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, run `pnpm infra:ensure` and then `pnpm test:integration:quiet`. Check the diff against each rule in the `Constraints:` todo and name any you could not satisfy.
+- **After** "Verify on the matching surface." run `pnpm lint:quiet && pnpm type-check:quiet && pnpm test:quiet` (OPS-10). When the change touches `apps/api`, `apps/web`, `apps/worker`, `packages/core`, or `packages/infra`, run `pnpm infra:ensure` and then `pnpm test:integration:quiet`. Check the diff against each rule in the `Constraints:` todo and name any you could not satisfy.
 - **After** "Verify on the same surface." run the same gates and the same constraint check.
 - **After** "Prove behavior is unchanged on the real artifact" run the same gates and the same constraint check.
 - **After** "Parse and compare the artifacts" run the same gates and the same constraint check.

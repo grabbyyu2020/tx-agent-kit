@@ -13,7 +13,7 @@ This skill is the single source of truth for how code in this repository must be
 2. Find each path's area in the table below and read that reference in full. Always read `global.md` and `process.md`.
 3. Write `Constraints: <IDs>` into your todo list, naming every rule that applies to the change.
 4. When you delegate, put the same `Constraints:` line and the absolute paths of the reference files into the brief, and tell the delegate to read them before its first edit.
-5. Before you report done, run the quality gates in `AGENTS.md` and check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
+5. Before you report done, run the quality gates (OPS-10) and check the diff against each listed rule. A rule whose `Enforced by` cell says `none` is checked only by you and by review, so check those by hand.
 
 If a rule blocks a sensible change, stop and ask the user. Do not work around a rule, weaken a lint, or add a suppression.
 

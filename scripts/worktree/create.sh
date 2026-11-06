@@ -78,7 +78,7 @@ WORKTREE_PATH="$PRIMARY_ROOT/.worktrees/$WORKTREE_NAME"
 
 if [[ -d "$WORKTREE_PATH" ]]; then
   log_error "Worktree path already exists: $WORKTREE_PATH"
-  log_error "Remove it first with: git worktree remove $WORKTREE_PATH"
+  log_error "Remove it first with: ./scripts/worktree/manage.sh remove $WORKTREE_NAME"
   exit 1
 fi
 
@@ -86,7 +86,7 @@ fi
 # but fail early with a clearer message.
 if git -C "$PRIMARY_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH"; then
   log_error "Branch already exists: $BRANCH"
-  log_error "Use a different name, or check it out in a worktree with: git worktree add $WORKTREE_PATH $BRANCH"
+  log_error "Use a different branch name."
   exit 1
 fi
 
@@ -98,8 +98,7 @@ printf '  Base: %s\n' "$BASE_BRANCH"
 
 mkdir -p "$PRIMARY_ROOT/.worktrees"
 
-# We must invoke `git worktree add` here — the PreToolUse hook allows this
-# script to do so because we are the sanctioned creation path.
+# The only sanctioned `git worktree add` (OPS-05): setup.sh runs right after it.
 git -C "$PRIMARY_ROOT" worktree add -b "$BRANCH" "$WORKTREE_PATH" "$BASE_BRANCH"
 
 log_info "Running worktree setup"
