@@ -1,0 +1,34 @@
+# Orb dev stack without Docker. Orbs lack CAP_SYS_ADMIN, so containers cannot
+# mount their layers; .agents/setup installs Postgres 16 and Redis natively and
+# these services run them. Start everything with `amp orb services ensure`.
+services:
+  postgres:
+    platforms: [linux]
+    port: 5432
+    command: >-
+      exec /usr/lib/postgresql/16/bin/postgres -D "$HOME/.local/share/tx-agent-kit/postgres"
+      -p 5432 -k /tmp -c listen_addresses=127.0.0.1 -c max_connections=1000
+      -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+  redis:
+    platforms: [linux]
+    port: 6379
+    command: exec redis-server --port 6379 --bind 127.0.0.1 --save '' --appendonly no
+  temporal:
+    platforms: [linux]
+    port: 7233
+    command: >-
+      mkdir -p .data/temporal && exec temporal server start-dev --ip 127.0.0.1
+      --port 7233 --ui-port 8233 --db-filename .data/temporal/dev-state.db --log-level warn
+  api:
+    platforms: [linux]
+    port: 4000
+    health: /health
+    command: exec pnpm --filter @tx-agent-kit/api dev
+  worker:
+    platforms: [linux]
+    port: 9229
+    command: exec pnpm --filter @tx-agent-kit/worker dev
+  web:
+    platforms: [linux]
+    port: 3000
+    command: exec pnpm --filter @tx-agent-kit/web dev
