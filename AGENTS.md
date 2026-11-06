@@ -65,7 +65,7 @@ pnpm infra:ensure # shared Docker infra: Postgres, Redis, OTEL, Jaeger, Spotligh
 
 Rules: OPS-05, OPS-06; shared infra: TEST-10.
 
-pstack creates worktrees with Claude Code (`isolation: "worktree"`, `EnterWorktree`). `.worktreeinclude` copies `.env` and `.artifacts/local-infra.env` into them. Run `pnpm install --frozen-lockfile` before the first gate. Worktrees share ports and the database with the primary checkout, so run dev servers and integration tests in one checkout at a time.
+pstack creates worktrees with Claude Code (`isolation: "worktree"`, `EnterWorktree`). `.claude/settings.json` sets `worktree.baseRef` to `head`, so a new worktree starts from the current commit, not `origin/main`. Uncommitted changes stay behind, so commit them first or copy them in. `.worktreeinclude` copies `.env` and `.artifacts/local-infra.env` into them. Run `pnpm install --frozen-lockfile` before the first gate. Worktrees share ports and the database with the primary checkout, so run dev servers and integration tests in one checkout at a time.
 
 ## Quality gates
 
