@@ -109,7 +109,6 @@
 - `pnpm mcp:supabase`: start Supabase MCP (requires `SUPABASE_ACCESS_TOKEN`).
 - `pnpm playwright:auth:bootstrap`: create/sign-in bootstrap user via real auth API and write Playwright storage state.
 - `op run --env-file=.env -- pnpm playwright:auth:bootstrap`: recommended 1Password-backed auth bootstrap flow.
-- `pnpm mcp:codex-config`: print Codex MCP TOML blocks wired to local wrappers.
 - `PROMETHEUS_URL=http://host.docker.internal:9090 pnpm mcp:prometheus`: point containerized Prometheus MCP at host Prometheus (default).
 - `JAEGER_URL=http://localhost JAEGER_PORT=16686 pnpm mcp:jaeger`: host-mode Jaeger MCP defaults (use either host+port or URL with embedded port).
 - `pnpm mcp:spotlight`: start Spotlight MCP (connects to local Spotlight sidecar for AI-assisted debugging).

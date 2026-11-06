@@ -54,7 +54,8 @@ const tasks = [
     label: 'permissions:check',
     commands: [[node, '--import', 'tsx', resolve(repoRoot, 'scripts', 'permissions-sync.mjs'), '--check']]
   },
-  { label: 'e2e-budget', commands: [[node, lint('enforce-e2e-budget.mjs')]] }
+  { label: 'e2e-budget', commands: [[node, lint('enforce-e2e-budget.mjs')]] },
+  { label: 'agent-workflow', commands: [[node, lint('enforce-agent-workflow.mjs')]] }
 ]
 
 const runCommand = ([command, ...args]) =>

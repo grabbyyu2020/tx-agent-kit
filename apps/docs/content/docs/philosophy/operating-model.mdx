@@ -23,8 +23,8 @@ The key files that encode the system of record:
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | Agent instructions, hard constraints, workflow requirements |
-| `AGENTS.md` | Map-like index for agent navigation |
+| `AGENTS.md` | Map-like index and AI workflow (`CLAUDE.md` imports it) |
+| `.claude/skills/project-constraints/` | Every coding constraint, paired with what enforces it |
 | `packages/tooling/eslint-config/domain-invariants.js` | Lint rules encoding architectural taste |
 | `scripts/lint/enforce-domain-invariants.mjs` | Structural invariant checks |
 | `scripts/check-shell-invariants.sh` | Shell-level invariant checks |

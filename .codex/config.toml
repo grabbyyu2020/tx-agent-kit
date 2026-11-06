@@ -1,5 +1,0 @@
-[mcp_servers.prometheus_local]
-command = "./scripts/mcp/prometheus.sh"
-
-[mcp_servers.jaeger_local]
-command = "./scripts/mcp/jaeger.sh"

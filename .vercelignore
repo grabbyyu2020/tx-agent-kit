@@ -2,7 +2,6 @@
 .worktrees
 .turbo
 .vercel
-.tx
 .diffcore
 .playwright-cli
 artefacts

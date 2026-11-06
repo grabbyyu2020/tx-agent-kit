@@ -4,7 +4,7 @@
  * UN-WIDENABLE E2E BUDGET GUARD.
  *
  * The Trace Learn browser E2E wall-clock is hard-capped at 120 seconds across
- * THREE enforcement layers (see apps/web/CLAUDE.md / AGENTS.md E2E policy):
+ * THREE enforcement layers (see the project-constraints skill, references/testing.md):
  *
  *   1. apps/web/e2e/playwright.config.ts `globalTimeout` — the whole-run cap;
  *      the run FAILS if exceeded. Per-test `timeout` and `expect.timeout` are

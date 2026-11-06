@@ -16,13 +16,12 @@
 ## Ensure shared infra from any worktree
 `./scripts/worktree/ensure-shared-infra.sh`
 
-## MCP setup (Claude Code + Codex)
+## MCP setup (Claude Code)
 1. `cp .env.example .env`
 2. Fill required secrets in `.env` (`SUPABASE_ACCESS_TOKEN`; optional `CONTEXT7_API_KEY`).
 3. Ensure Docker is running (Prometheus MCP uses container runtime).
 4. Claude Code uses project `.mcp.json` automatically.
-5. For Codex, run `pnpm mcp:codex-config`, then copy the output into `~/.codex/config.toml`.
-6. Observability MCP notes:
+5. Observability MCP notes:
    - `pnpm mcp:prometheus` runs in Docker and reads `PROMETHEUS_URL`.
    - Default is `PROMETHEUS_URL=http://host.docker.internal:9090` so the MCP container can reach host Prometheus.
    - On Linux, wrapper adds `--add-host=host.docker.internal:host-gateway`; override `PROMETHEUS_URL` if your target differs.
@@ -40,7 +39,6 @@
    - Uses `/v1/auth/sign-up`, `/v1/auth/sign-in`, and `/v1/auth/me` only (no auth bypass endpoints).
    - Writes storage state to `.artifacts/playwright-mcp/storage-state.json` unless `PLAYWRIGHT_MCP_STORAGE_STATE` is set.
    - Production bootstrap is blocked unless `PLAYWRIGHT_AUTH_ALLOW_PROD=true`.
-   - See `.claude/skills/playwright-cli/references/auth-bootstrap.md` for full reference.
 
 ## Run services
 `pnpm dev`

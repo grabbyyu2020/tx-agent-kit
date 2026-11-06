@@ -27,8 +27,7 @@ The worktree is created at `<primary-root>/.worktrees/<derived-name>`, and
 has port allocations, secrets seeded from the primary `.env`, and a
 dedicated Postgres schema.
 
-Do NOT run `git worktree add` directly — the `.claude/settings.json`
-PreToolUse hook blocks raw `git worktree add` to guarantee setup runs.
+Do NOT run `git worktree add` directly; it skips setup.
 USAGE
 }
 

@@ -40,7 +40,7 @@
     "lint:knip:strict": "knip --no-progress --reporter compact",
     "lint:jscpd": "jscpd --config .jscpd.json apps/api/src packages/core/src scripts",
     "lint:invariants": "node ./scripts/lint/run-invariants.mjs",
-    "lint:invariants:serial": "node ./scripts/lint/enforce-domain-invariants.mjs && node ./scripts/lint/enforce-web-client-contracts.mjs && node ./scripts/lint/enforce-route-kind-contracts.mjs && node ./scripts/lint/enforce-source-type-safety.mjs && node ./scripts/lint/enforce-compose-runtime-contracts.mjs && node ./scripts/lint/enforce-tsconfig-alignment.mjs && node ./scripts/lint/enforce-domain-event-contracts.mjs && node ./scripts/lint/enforce-enum-sync.mjs && node ./scripts/lint/enforce-no-hardcoded-test-emails.mjs && pnpm lint:product-leaks && pnpm agent-surfaces:check && node ./scripts/lint/enforce-agent-client-surface-sync.mjs && pnpm permissions:check && node ./scripts/lint/enforce-e2e-budget.mjs",
+    "lint:invariants:serial": "node ./scripts/lint/enforce-domain-invariants.mjs && node ./scripts/lint/enforce-web-client-contracts.mjs && node ./scripts/lint/enforce-route-kind-contracts.mjs && node ./scripts/lint/enforce-source-type-safety.mjs && node ./scripts/lint/enforce-compose-runtime-contracts.mjs && node ./scripts/lint/enforce-tsconfig-alignment.mjs && node ./scripts/lint/enforce-domain-event-contracts.mjs && node ./scripts/lint/enforce-enum-sync.mjs && node ./scripts/lint/enforce-no-hardcoded-test-emails.mjs && pnpm lint:product-leaks && pnpm agent-surfaces:check && node ./scripts/lint/enforce-agent-client-surface-sync.mjs && pnpm permissions:check && node ./scripts/lint/enforce-e2e-budget.mjs && node ./scripts/lint/enforce-agent-workflow.mjs",
     "lint:ci-env": "node ./scripts/validate-ci-env.mjs",
     "lint:shell": "./scripts/check-shell-invariants.sh",
     "test": "turbo run test",
@@ -78,7 +78,6 @@
     "tx-agent-kit:mcp": "pnpm --silent --filter @tx-agent-kit/mcp build && node packages/mcp/dist/server.js",
     "langfuse:ensure-local": "./scripts/langfuse/ensure-local-bootstrap.sh",
     "playwright:auth:bootstrap": "node ./scripts/playwright/bootstrap-auth-storage-state.mjs",
-    "mcp:codex-config": "./scripts/mcp/codex-config.sh",
     "monitoring:validate": "node scripts/monitoring/validate-monitoring.mjs",
     "tx": "node ./scripts/tx-cli.mjs",
     "infra:ensure": "./scripts/start-dev-services.sh",
@@ -118,7 +117,7 @@
     "test:gcp:e2e:teardown": "./scripts/deploy/gcp/teardown-toy-project.sh",
     "permissions:sync": "node --import tsx scripts/permissions-sync.mjs",
     "permissions:check": "node --import tsx scripts/permissions-sync.mjs --check",
-    "sync:agent-docs": "./scripts/sync-agent-docs.sh"
+    "pstack:sync": "node scripts/agents/sync-pstack.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

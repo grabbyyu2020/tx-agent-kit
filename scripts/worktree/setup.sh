@@ -230,23 +230,6 @@ psql "${DB_URL}" -c "CREATE SCHEMA IF NOT EXISTS \"${SCHEMA_NAME}\";"
 RESET
 chmod +x "$WORKTREE_PATH/reset-worktree-schema.sh"
 
-# Share `tx` task state with the primary checkout. `.tx/tasks.db` is
-# gitignored, so each worktree gets its own empty SQLite file the first
-# time `tx` is invoked there. We instead symlink it to the primary
-# checkout's database so agents working in a worktree see the same task
-# queue + spec coverage as humans on main. `.tx/config.toml` and
-# `.tx/.gitignore` are NOT symlinked — they are git-tracked and
-# identical across checkouts; only the gitignored database file needs sharing.
-if [[ -n "$PRIMARY_WORKTREE_PATH" && "$PRIMARY_WORKTREE_PATH" != "$WORKTREE_PATH" ]]; then
-  PRIMARY_TX_DB="$PRIMARY_WORKTREE_PATH/.tx/tasks.db"
-  WORKTREE_TX_DIR="$WORKTREE_PATH/.tx"
-  if [[ -d "$WORKTREE_TX_DIR" && -f "$PRIMARY_TX_DB" ]]; then
-    rm -f "$WORKTREE_TX_DIR/tasks.db" "$WORKTREE_TX_DIR/tasks.db-shm" "$WORKTREE_TX_DIR/tasks.db-wal"
-    ln -s "$PRIMARY_TX_DB" "$WORKTREE_TX_DIR/tasks.db"
-    log_info "Linked .tx/tasks.db → primary checkout"
-  fi
-fi
-
 if [[ -f "$WORKTREE_PATH/pnpm-workspace.yaml" && -f "$WORKTREE_PATH/package.json" ]]; then
   log_info "Installing worktree dependencies"
   (cd "$WORKTREE_PATH" && pnpm install)
